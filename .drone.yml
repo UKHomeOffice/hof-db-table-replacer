@@ -1,0 +1,154 @@
+---
+kind: pipeline
+name: default
+type: kubernetes
+
+environment:
+  IMAGE_URL: quay.io/ukhomeofficedigital
+  IMAGE_REPO: hof-lookup-replacer
+
+trigger:
+  branch:
+    - master
+
+steps:    
+  - name: setup
+    pull: if-not-exists
+    image: node:lts
+    commands:
+      - yarn install --frozen-lockfile
+    when:
+      branch: master
+      event: [push, pull_request]
+
+  - name: linting
+    pull: if-not-exists
+    image: node:lts
+    commands:
+      - yarn run test:lint
+    when:
+      branch: master
+      event: [push, pull_request]
+
+  - name: unit-tests
+    image: node:lts
+    commands:
+      - yarn test:unit
+    when:
+      branch: master
+      event: [push, pull_request]
+
+  - name: integration-tests
+    image: node:lts
+    environment:
+      NODE_ENV: test
+      DB_HOST: postgres-db
+      SERVICE_NAME: asc
+    commands:
+      - sleep 15
+      - yarn db:setup
+      - yarn test:integration
+    when:
+      branch: master
+      event: [push, pull_request]
+
+  - name: build_image
+    image: 340268328991.dkr.ecr.eu-west-2.amazonaws.com/acp/dind
+    commands:
+      - n=0; while [ "$n" -lt 60 ] && [ ! docker stats --no-stream ]; do n=$(( n + 1 )); sleep 1; done
+      - docker build --no-cache -t $${IMAGE_REPO}:$${DRONE_COMMIT_SHA} .
+    volumes:
+      - name: dockersock
+        path: /var/run
+    when:
+      branch: master
+      event: [push, pull_request]
+
+  - name: image_to_quay
+    pull: if-not-exists
+    image: 340268328991.dkr.ecr.eu-west-2.amazonaws.com/acp/dind
+    environment:
+      DOCKER_PASSWORD:
+        from_secret: DOCKER_PASSWORD
+    commands:
+    - docker login -u="ukhomeofficedigital+hof_lookup_replacer" -p=$${DOCKER_PASSWORD} quay.io
+    - docker tag $${IMAGE_REPO}:$${DRONE_COMMIT_SHA} $${IMAGE_URL}/$${IMAGE_REPO}:$${DRONE_COMMIT_SHA}
+    - docker push $${IMAGE_URL}/$${IMAGE_REPO}:$${DRONE_COMMIT_SHA}
+    when:
+      branch: master
+      event: [push, pull_request]
+
+# Trivy Security Scannner
+  - name: scan-image
+    pull: always
+    image: 340268328991.dkr.ecr.eu-west-2.amazonaws.com/acp/trivy/client:latest
+    resources:
+      limits:
+        cpu: 1000
+        memory: 1024Mi
+    environment:
+      IMAGE_NAME: hof-lookup-replacer:${DRONE_COMMIT_SHA}
+      TOLERATE: MEDIUM,HIGH,CRITICAL
+      FAIL_ON_DETECTION: false
+      IGNORE_UNFIXED: true
+    #  ALLOW_CVE_LIST_FILE: hof-services-config/Electronic_Travel_Authorisation/trivy-cve-exceptions.txt
+    when:
+      event:
+      - pull_request
+      - push
+      - tag
+
+  # CRON job steps that runs security scans using Snyk & Anchore
+  - name: cron_build_image
+    image: 340268328991.dkr.ecr.eu-west-2.amazonaws.com/acp/dind
+    commands:
+      - docker build --no-cache -t $${IMAGE_REPO}:$${DRONE_COMMIT_SHA} .
+    volumes:
+      - name: dockersock
+        path: /var/run
+    when:
+      cron: security_scans
+      event: cron
+
+  - name: cron_snyk_scan
+    pull: if-not-exists
+    image: node:lts
+    environment:
+      SNYK_TOKEN:
+        from_secret: snyk_token
+    commands:
+      - yarn install --frozen-lockfile
+      - yarn run test:snyk
+    when:
+      cron: security_scans
+      event: cron
+
+  - name: cron_trivy_scan
+    image: 340268328991.dkr.ecr.eu-west-2.amazonaws.com/acp/trivy/client:latest
+    pull: always
+    environment:
+      IMAGE_NAME: hof-lookup-replacer:${DRONE_COMMIT_SHA}
+      SEVERITY: MEDIUM,HIGH,CRITICAL
+      FAIL_ON_DETECTION: false
+      IGNORE_UNFIXED: true
+    #  ALLOW_CVE_LIST_FILE: hof-services-config/Electronic_Travel_Authorisation/trivy-cve-exceptions.txt
+    when:
+      cron: security_scans
+      event: cron
+
+services:
+  - name: docker
+    image: 340268328991.dkr.ecr.eu-west-2.amazonaws.com/acp/dind
+
+  - name: postgres-db
+    image: postgres
+    environment:
+      POSTGRES_DB: test
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+
+volumes:
+  - name: dockersock
+    temp: {}
+
+...

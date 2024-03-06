@@ -6,28 +6,12 @@ type: kubernetes
 environment:
   IMAGE_URL: quay.io/ukhomeofficedigital
   IMAGE_REPO: hof-lookup-replacer
-  HOF_CONFIG: hof-services-config/hof_lookup_replacer
 
 trigger:
   branch:
     - master
 
-steps:
-  - name: clone_repos
-    image: alpine/git
-    environment:
-      DRONE_GIT_USERNAME:
-        from_secret: drone_git_username
-      DRONE_GIT_TOKEN:
-        from_secret: drone_git_token
-    commands:
-      - git clone https://$${DRONE_GIT_USERNAME}:$${DRONE_GIT_TOKEN}@github.com/UKHomeOfficeForms/hof-services-config.git
-    when:
-      branch:
-        include:
-        - master
-      event: [push, pull_request]
-
+steps:    
   - name: setup
     pull: if-not-exists
     image: node:lts
@@ -94,20 +78,27 @@ steps:
       branch: master
       event: [push, pull_request]
 
-  # CRON job steps that runs security scans using Snyk & Anchore
-  - name: cron_clone_repos
-    image: alpine/git
+# Trivy Security Scannner
+  - name: scan-image
+    pull: always
+    image: 340268328991.dkr.ecr.eu-west-2.amazonaws.com/acp/trivy/client:latest
+    resources:
+      limits:
+        cpu: 1000
+        memory: 1024Mi
     environment:
-      DRONE_GIT_USERNAME:
-        from_secret: drone_git_username
-      DRONE_GIT_TOKEN:
-        from_secret: drone_git_token
-    commands:
-      - git clone https://$${DRONE_GIT_USERNAME}:$${DRONE_GIT_TOKEN}@github.com/UKHomeOfficeForms/hof-services-config.git
+      IMAGE_NAME: hof-lookup-replacer:${DRONE_COMMIT_SHA}
+      TOLERATE: MEDIUM,HIGH,CRITICAL
+      FAIL_ON_DETECTION: false
+      IGNORE_UNFIXED: true
+    #  ALLOW_CVE_LIST_FILE: hof-services-config/Electronic_Travel_Authorisation/trivy-cve-exceptions.txt
     when:
-      cron: security_scans
-      event: cron
+      event:
+      - pull_request
+      - push
+      - tag
 
+  # CRON job steps that runs security scans using Snyk & Anchore
   - name: cron_build_image
     image: 340268328991.dkr.ecr.eu-west-2.amazonaws.com/acp/dind
     commands:
@@ -132,52 +123,18 @@ steps:
       cron: security_scans
       event: cron
 
-  - name: cron_anchore_scan
-    image: 340268328991.dkr.ecr.eu-west-2.amazonaws.com/acp/anchore-submission:latest
+  - name: cron_trivy_scan
+    image: 340268328991.dkr.ecr.eu-west-2.amazonaws.com/acp/trivy/client:latest
     pull: always
     environment:
-      IMAGE_NAME: save-return-api:${DRONE_COMMIT_SHA}
-      LOCAL_IMAGE: true
-      TOLERATE: medium
-      WHITELIST_FILE: hof-services-config/Modern_Slavery_Nrm/anchore-cve-exceptions.txt
+      IMAGE_NAME: hof-lookup-replacer:${DRONE_COMMIT_SHA}
+      SEVERITY: MEDIUM,HIGH,CRITICAL
+      FAIL_ON_DETECTION: false
+      IGNORE_UNFIXED: true
+    #  ALLOW_CVE_LIST_FILE: hof-services-config/Electronic_Travel_Authorisation/trivy-cve-exceptions.txt
     when:
       cron: security_scans
       event: cron
-
-  # Slack notification upon a CRON job fail
-  - name: cron_notify_slack_tear_down_pr_envs
-    pull: if-not-exists
-    image: plugins/slack
-    settings:
-      channel: sas-build
-      failure: ignore
-      icon_url: http://readme.drone.io/0.5/logo_dark.svg
-      icon.url: http://readme.drone.io/0.5/logo_dark.svg
-      template: "CRON Job {{build.deployTo}} of NRM Alerts Service has {{build.status}} - <{{build.link}}|#{{build.number}}> {{#success build.status}}\n  :thumbsup: :thumbsup: :thumbsup:\n{{else}}\n  :x: :x: :x:\n{{/success}} Author: {{build.author}}\n\nDuration: {{since job.started}}\n\nJob: <{{build.link}}|#{{build.number}}>\n\nCommit: {{build.commit}}\n"
-      username: Drone
-      webhook:
-        from_secret: slack_webhook
-    when:
-      cron: tear_down_pr_envs
-      event: cron
-      status: failure
-
-  - name: cron_notify_slack_security_scans
-    pull: if-not-exists
-    image: plugins/slack
-    settings:
-      channel: sas-build
-      failure: ignore
-      icon_url: http://readme.drone.io/0.5/logo_dark.svg
-      icon.url: http://readme.drone.io/0.5/logo_dark.svg
-      template: "CRON Job {{build.deployTo}} of NRM Alerts Service has {{build.status}} - <{{build.link}}|#{{build.number}}> {{#success build.status}}\n  :thumbsup: :thumbsup: :thumbsup:\n{{else}}\n  :x: :x: :x:\n{{/success}} Author: {{build.author}}\n\nDuration: {{since job.started}}\n\nJob: <{{build.link}}|#{{build.number}}>\n\nCommit: {{build.commit}}\n"
-      username: Drone
-      webhook:
-        from_secret: slack_webhook
-    when:
-      cron: security_scans
-      event: cron
-      status: failure
 
 services:
   - name: docker
@@ -189,12 +146,6 @@ services:
       POSTGRES_DB: test
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
-  # Anchore scanning needs background service to run
-  - name: anchore-submission-server
-    image: 340268328991.dkr.ecr.eu-west-2.amazonaws.com/acp/anchore-submission:latest
-    pull: always
-    commands:
-      - /run.sh server
 
 volumes:
   - name: dockersock

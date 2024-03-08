@@ -4,7 +4,7 @@ A Node.js script for replacing db lookup tables as a scheduled job configurable 
 
 The script retrieves a CSV formatted file from a given location, validates against given rules and then replaces a lookup table using the CSV rows. On success or failure the script will send appropriate notification messages.
 
-This service uses [knex.js](https://knexjs.org/) to handle DB connection and query building.
+This service uses either [pg-promise](https://vitaly-t.github.io/pg-promise/index.html) or [knex.js](https://knexjs.org/) to handle db connection and query building. You can configure the client and model used using environment variables.
 
 ## Script steps
 
@@ -54,6 +54,7 @@ CASEWORKER_EMAIL # Email address to send pass/fail notifications to
 NOTIFY_KEY # API key for a GovUK Notify service
 NOTIFY_TEMPLATE_KEYS # References for specific GovUK Notify templates you would want to send e.g. pass/fail cases
 SNYK_TOKEN # Optional if you want to run scans on node modules locally
+DB_MODEL # Default is pgp-model (using the pg-promise library). Update to a different model to use a different database setup.
 ```
 
 * `yarn install` to download node modules
@@ -61,7 +62,7 @@ SNYK_TOKEN # Optional if you want to run scans on node modules locally
 
 `run.js` is the entrypoint to the app.
 
-Note that Knex pools remain open for 30 seconds after use unless directly terminated.
+Note that PGP pools remain open for 10 seconds and Knex pools remain open for 30 seconds by default after use unless directly terminated.
 
 ## Testing
 

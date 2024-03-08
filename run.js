@@ -1,19 +1,16 @@
 const config = require('./config');
-const { serviceName, targetTable, sourceFileTable } = config.service;
-
-const Model = require(`./models/${config.dbModel}`);
-const knexConfig = require('./knexconfig.js')[config.env];
-const knex = require('knex')(knexConfig);
 
 const logger = require('./lib/logger')({ env: config.env });
 
-const db = new Model(knex, targetTable, sourceFileTable);
+const Model = require(`./db/models/${config.db.model}`);
+dbClient = new Model();
 
-logger.log('info', `Preparing table update for ${serviceName}`);
+function runUpdate(db) {
+  logger.log('info', `Preparing table update for ${config.service.serviceName}`);
 
-db.get()
-  .then(result => {
-    const records = result;
-    logger.log('info', 'First record in DB table:', records[0]);
-  })
-  .catch(error => logger.log('error', 'Retrieving record:', error));
+  db.getLatestUrl()
+    .then(url => logger.log('info', `Latest uploaded file is at: ${url}`))
+    .catch(error => logger.log('error', 'collecting latest file URL:', error));
+}
+
+runUpdate(dbClient);

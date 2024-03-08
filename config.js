@@ -3,7 +3,14 @@
 module.exports = {
   env: process.env.NODE_ENV || 'local',
   requestTimeout: +process.env.REQUEST_TIMEOUT || 1000,
-  dbModel: process.env.DB_MODEL || 'postgres-model',
+  db: {
+    host: process.env.DB_HOST || 'localhost',
+    port: process.env.DB_PORT || '5432',
+    user: process.env.DB_USER || 'postgres',
+    password: process.env.DB_PASS || 'postgres',
+    database: process.env.DB_NAME,
+    model: process.env.DB_MODEL || 'pgp-model',
+  },
   service: {
     serviceName: process.env.SERVICE_NAME,
     targetTable: process.env.TARGET_TABLE,

@@ -19,13 +19,21 @@ This service uses either [pg-promise](https://vitaly-t.github.io/pg-promise/inde
 
 ## Configuration
 
-The `config.js` file turns most of the service's environment variables into an exported object that can be referred to throughout the app. some defaults are configured here.
+The `config.js` file turns most of the service's environment variables into an exported object that can be referred to throughout the app. Some defaults are configured here.
 
-`knexconfig.js` provides different connection config for different environments such as local, test remote as well as pool connection config.
+### Database
 
-The /services folder contains service specific configuration that is more difficult to inject as environment variables - such as validation rules.
+hof-lookup-replacer aims to be database agnostic - the main script should run given different database models. The model chosen can be configured by the `DB_MODEL` environment variable being one of the filenames of the models provided (e.g. `DB_MODEL=knex-postgres-model`). The default is pgp-model which uses pg-promise.
 
-The /models folder can contain the knex functions to interact with the DB prepared for different SQL services. Currently we only use PostgreSQL.
+If you are adding a new database client you should add the package with `yarn add <package>`, add a db connection file in /db and adapt one of the existing models with methods useable by that client in /db/models. From there `run.js` should pick up and connect to the correct client.
+
+In the /db folder, files will provide an exported connection to a database client with support for local, test and remote configuration.
+
+The /db/models folder contains models for available clients providing exported classes with query methods for the given clients.
+
+### Service
+
+The /services folder contains service specific configuration that is difficult to inject as environment variables - such as validation rules. Setting the `SERVICE_NAME` environment variable to one of the service name subfolders in /services should allow the app to run with that folder's specific configurations.
 
 ## Build and run
 

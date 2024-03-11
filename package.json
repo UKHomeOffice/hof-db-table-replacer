@@ -9,7 +9,7 @@
   "scripts": {
     "start": "node run.js",
     "start:dev": "node -r dotenv/config run.js",
-    "test:integration": "jest --verbose --testPathPattern=test/integration",
+    "test:integration": "jest --verbose --testPathPattern=test/integration --passWithNoTests",
     "test:unit": "jest --verbose --testPathPattern=test/unit",
     "test:all": "yarn test:integration && yarn test:unit",
     "test:lint": "eslint . --config ./node_modules/eslint-config-hof/default.js",

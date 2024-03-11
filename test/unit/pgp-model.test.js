@@ -20,4 +20,14 @@ describe('The database model method getLatestUrl()', () => {
       expect(data).toContain('https://');
     });
   });
+
+  test('returns an error if failing', async () => {
+    client = {
+      one: jest.fn().mockRejectedValue(new Error('Url retrieval failed'))
+    };
+
+    return db.getLatestUrl(client).catch(error => {
+      expect(error.message).toEqual('Url retrieval failed');
+    });
+  });
 });

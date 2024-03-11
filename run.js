@@ -2,7 +2,7 @@ const config = require('./config');
 
 const logger = require('./lib/logger')({ env: config.env });
 
-const client = require(`./db/${config.db.client}`)
+const client = require(`./db/${config.db.client}`);
 const Model = require(`./db/models/${config.db.model}`);
 const db = new Model();
 

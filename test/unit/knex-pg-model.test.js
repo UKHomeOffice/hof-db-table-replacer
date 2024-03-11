@@ -1,5 +1,5 @@
 const Model = require('../../db/models/knex-postgres-model');
-let db = new Model();
+const db = new Model();
 
 describe('The database model method getLatestUrl()', () => {
   let client;
@@ -9,10 +9,10 @@ describe('The database model method getLatestUrl()', () => {
         from: jest.fn(() => ({
           orderBy: jest.fn(() => ({
             limit: jest.fn(() => ({
-              timeout: jest.fn().mockResolvedValue([{url : 'https://...'}])
+              timeout: jest.fn().mockResolvedValue([{ url: 'https://...' }])
             }))
           }))
-        })),
+        }))
       }))
     };
   });
@@ -27,4 +27,4 @@ describe('The database model method getLatestUrl()', () => {
       expect(data).toContain('https://');
     });
   });
-})
+});

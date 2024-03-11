@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 const config = require('../../config');
 const { targetTable, sourceFileTable } = config.service;
 

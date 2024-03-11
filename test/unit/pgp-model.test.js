@@ -1,12 +1,12 @@
 const Model = require('../../db/models/pgp-model');
-let db = new Model();
+const db = new Model();
 
 describe('The database model method getLatestUrl()', () => {
   let client;
   beforeAll(() => {
     client = {
-      one: jest.fn().mockResolvedValue({url : 'https://...'})
-    }
+      one: jest.fn().mockResolvedValue({ url: 'https://...' })
+    };
   });
 
   test('should return a string', async () => {
@@ -20,4 +20,4 @@ describe('The database model method getLatestUrl()', () => {
       expect(data).toContain('https://');
     });
   });
-})
+});

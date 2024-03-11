@@ -43,7 +43,7 @@ const poolConfig = {
 
 const setupConfig = conf => Object.assign({}, conf, serviceConfig, poolConfig);
 
-configOptions = {
+const configOptions = {
   test: setupConfig(testConfig),
   local: setupConfig(localConfig),
   development: setupConfig(remoteConfig),

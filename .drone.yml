@@ -61,7 +61,6 @@ steps:
       SERVICE_NAME: asc
     commands:
       - sleep 15
-      - yarn db:setup
       - yarn test:integration
     when:
       branch: master

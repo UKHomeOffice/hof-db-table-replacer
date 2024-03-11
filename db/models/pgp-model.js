@@ -1,8 +1,6 @@
 const config = require('../../config');
 const { targetTable, sourceFileTable } = config.service;
 
-const pgp = require('../pgp');
-
 module.exports = class PgpModel {
   constructor() {
     this.requestTimeout = config.requestTimeout;
@@ -13,7 +11,7 @@ module.exports = class PgpModel {
     this.notifyModel();
   }
 
-  getLatestUrl() {
+  getLatestUrl(pgp) {
     return new Promise((resolve, reject) => {
       pgp.one('SELECT url FROM $1~ ORDER BY id DESC LIMIT 1', this.sourceFileTable)
         .then(data => {

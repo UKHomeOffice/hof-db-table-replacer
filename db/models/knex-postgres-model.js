@@ -1,8 +1,6 @@
 const config = require('../../config');
 const { targetTable, sourceFileTable } = config.service;
 
-const knex = require('../knex');
-
 module.exports = class KnexPostgresModel {
   constructor() {
     this.requestTimeout = config.requestTimeout;
@@ -13,7 +11,7 @@ module.exports = class KnexPostgresModel {
     this.notifyModel();
   }
 
-  async getLatestUrl() {
+  async getLatestUrl(knex) {
     const result = await knex.select('url')
       .from(this.sourceFileTable)
       .orderBy('id', 'desc')

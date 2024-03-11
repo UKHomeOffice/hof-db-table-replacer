@@ -62,7 +62,8 @@ CASEWORKER_EMAIL # Email address to send pass/fail notifications to
 NOTIFY_KEY # API key for a GovUK Notify service
 NOTIFY_TEMPLATE_KEYS # References for specific GovUK Notify templates you would want to send e.g. pass/fail cases
 SNYK_TOKEN # Optional if you want to run scans on node modules locally
-DB_MODEL # Default is pgp-model (using the pg-promise library). Update to a different model to use a different database setup.
+DB_CLIENT # Defaults to pgp (using the pg-promise library). Set this value if you want to use a different client from /db e.g. knex
+DB_MODEL # Defaults to pgp-model. Set this value to use a different database model e.g. knex-postgres-model.
 ```
 
 * `yarn install` to download node modules

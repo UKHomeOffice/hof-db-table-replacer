@@ -9,7 +9,8 @@ module.exports = {
     user: process.env.DB_USER || 'postgres',
     password: process.env.DB_PASS || 'postgres',
     database: process.env.DB_NAME,
-    model: process.env.DB_MODEL || 'pgp-model',
+    client: process.env.DB_CLIENT || 'pgp',
+    model: process.env.DB_MODEL || 'pgp-model'
   },
   service: {
     serviceName: process.env.SERVICE_NAME,

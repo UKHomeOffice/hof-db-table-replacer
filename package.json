@@ -4,7 +4,7 @@
   "description": "A Node.js based service for replacing db lookup tables as a scheduled job.",
   "main": "run.js",
   "engines": {
-    "node": ">=18.19.0"
+    "node": ">=18.14.0"
   },
   "scripts": {
     "start": "node run.js",

@@ -7,8 +7,8 @@ const testConfig = {
   connection: {
     host: host,
     database: 'test',
-    user: user,
-    password: password
+    user: 'postgres',
+    password: 'postgres'
   }
 };
 
@@ -16,8 +16,8 @@ const localConfig = {
   client: 'postgresql',
   connection: {
     database: config.service.serviceName,
-    user: user,
-    password: password
+    user: 'postgres',
+    password: 'postgres'
   }
 };
 

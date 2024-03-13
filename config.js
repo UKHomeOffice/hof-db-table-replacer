@@ -1,16 +1,16 @@
 'use strict';
 
 module.exports = {
-  env: process.env.NODE_ENV || 'local',
+  env: process.env.NODE_ENV,
   requestTimeout: +process.env.REQUEST_TIMEOUT || 1000,
   db: {
-    host: process.env.DB_HOST || 'localhost',
-    port: process.env.DB_PORT || '5432',
-    user: process.env.DB_USER || 'postgres',
-    password: process.env.DB_PASS || 'postgres',
+    host: process.env.DB_HOST,
+    port: process.env.DB_PORT,
+    user: process.env.DB_USER,
+    password: process.env.DB_PASS,
     database: process.env.DB_NAME,
-    client: process.env.DB_CLIENT || 'pgp',
-    model: process.env.DB_MODEL || 'pgp-model'
+    client: process.env.DB_CLIENT,
+    model: process.env.DB_MODEL
   },
   service: {
     serviceName: process.env.SERVICE_NAME,
@@ -25,7 +25,7 @@ module.exports = {
     secret: process.env.KEYCLOAK_SECRET
   },
   notify: {
-    notifyKey: process.env.NOTIFY_KEY || 'test-key',
+    notifyKey: process.env.NOTIFY_KEY,
     caseworkerEmail: process.env.CASEWORKER_EMAIL
   }
 };

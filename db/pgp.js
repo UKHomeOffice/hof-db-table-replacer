@@ -7,8 +7,8 @@ const pgp = require('pg-promise')({
 });
 
 const connectionStrings = {
-  test: `postgres://${user}:${password}@${host}:${port}/test`,
-  local: `postgres://${user}:${password}@${host}:${port}/${config.service.serviceName}`,
+  test: `postgres://postgres:postgres@${host}:5432/test`,
+  local: `postgres://postgres:postgres@localhost:5432/${config.service.serviceName}`,
   development: `postgres://${user}:${password}@${host}:${port}/${database}`,
   production: `postgres://${user}:${password}@${host}:${port}/${database}`
 };

@@ -1,6 +1,6 @@
 FROM node:18-alpine@sha256:2322b1bb3917b313f2e9308395aa5c39d51b91cc92a5d4d5be6d0451fcfb4d24
 USER root
-# Update packages as a result of Anchore security vulnerability checks
+# Update packages
 RUN apk update && apk upgrade --no-cache
 
 # Setup nodejs group & nodejs user

@@ -16,10 +16,12 @@ The script retrieves a CSV formatted file from a given location, validates again
 
 This repository currently offers either [pg-promise](https://vitaly-t.github.io/pg-promise/index.html) or [knex.js](https://knexjs.org/) to handle db connection and query building. You can configure the client and model used using environment variables.
 
+Some [documentation of the high level design process for the lookup replacer](https://collaboration.homeoffice.gov.uk/display/DSASS/High+Level+Ellaboration+-+IMB-68) can be found in the HOF Confluence.
+
 ## Script steps
 
 1. Scheduled job runs with service specific environment.
-2. Connect to the service's RDS and get a file-vault retrieval URL for the most recently uploaded CSV data.
+2. Connect and retrieve the latest uploaded file-vault URL from a SQL database.
 3. Authenticate with the service's Keycloak realm and receive a bearer token to add to the request to file-vault for the CSV data.
 4. Make an API Request to file-vault and bring the CSV data into this application.
 5. Validate the CSV rows against rules given for the service. Remove any invalid rows before insertion and store them so they can be noted in the stakeholder confirmation email.

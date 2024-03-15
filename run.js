@@ -1,7 +1,7 @@
+/* eslint-disable no-cond-assign */
 const config = require('./config');
 
 const axios = require('axios');
-const fs = require('node:fs');
 const { parse } = require('csv-parse');
 
 const logger = require('./lib/logger')({ env: config.env });
@@ -21,45 +21,44 @@ async function runUpdate() {
     // Authenticate with Keycloak and receive token
     const fvToken = await fv.auth();
 
-    // Get the full data in one Buffer using URL and token
-    // const dataFile = await fv.getFile(dataFileUrl, fvToken);
-
     // Get the data file as a stream using URL and token
-    const response = await axios(fv.getFileConfig(dataFileUrl, fvToken))
-    const stream = response.data;
+    const response = await axios(fv.fileRequestConfig(dataFileUrl, fvToken));
+    const axiosStream = response.data;
 
     // Setup CSV parser
     const records = [];
-    const parser = parse({ columns: true });
+    const parser = parse({ from: 2, trim: true, columns: ['cepr', 'dob', 'dtr']});
 
-    parser.on('readable', function () {
+    // Start streaming data into CSV parser
+    axiosStream.pipe(parser);
+
+    axiosStream.on('error', error => {
+      logger.log('error', 'Axios stream error: ', error.message);
+      throw error
+    });
+
+    axiosStream.on('end', () => {
+      parser.end();
+    });
+
+    // Handle parsing of CSV records.
+    parser.on('readable', () => {
       let record;
       while ((record = parser.read()) !== null) {
-        // validate
+        // TODO transform object (if needed)
+        // TODO validate
         records.push(record);
       }
     });
 
-    parser.on('error', function (error) {
-      logger.log('error', err.message);
+    parser.on('error', error => {
+      logger.log('error', 'CSV parsing error: ', error.message);
       throw error;
     });
 
-    // Start streaming data into CSV parser
-    // let chunkCounter = 1;
-    stream.on('data', async chunk => {
-      // chunkCounter++;
-      // console.log(`CHUNK ${chunkCounter}:\n`, chunk.toString());
-      await parser.write(new Buffer.from(chunk));
+    parser.on('end', async () => {
+      logger.log('info', 'Records parsed (1-10): ', records.slice(0,10));
     });
-
-    stream.on('end', async () => {
-      parser.end();
-      console.log(records);
-      const writeStream = fs.createWriteStream('cepr-data.json');
-      await writeStream.write(JSON.stringify(records));
-    });
-
   } catch (error) {
     logger.log('error', 'error:', error);
   }

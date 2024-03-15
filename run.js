@@ -25,18 +25,18 @@ async function runUpdate() {
     const response = await axios(fv.fileRequestConfig(dataFileUrl, fvToken));
     const axiosStream = response.data;
 
+    // Setup CSV parser
+    const records = [];
+    const parser = parse({ from: 2, trim: true, columns: ['cepr', 'dob', 'dtr']});
+
     axiosStream.on('error', error => {
       logger.log('error', 'Axios stream error: ', error.message);
-      throw error
+      throw error;
     });
 
     axiosStream.on('end', () => {
       parser.end();
     });
-
-    // Setup CSV parser
-    const records = [];
-    const parser = parse({ from: 2, trim: true, columns: ['cepr', 'dob', 'dtr']});
 
     parser.on('readable', () => {
       let record;
@@ -52,7 +52,8 @@ async function runUpdate() {
     });
 
     parser.on('end', async () => {
-      logger.log('info', 'Records parsed (1-10): ', records.slice(0,10));
+      console.log(records);
+      logger.log('info', `Records parsed from rows ${records[0].cepr} to ${records[records.length - 1].cepr}`);
     });
 
     // Start streaming data from Axios into CSV parser

@@ -15,6 +15,12 @@ async function runUpdate() {
   logger.log('info', `Preparing table update for ${config.service.serviceName}`);
 
   try {
+    // Log memory usage over time.
+    // TODO Remove this before prod
+    setInterval(() => {
+      logger.log('info', `Used: ${process.memoryUsage().heapUsed / 1024 / 1024}`);
+    }, 50);
+
     // Get the most recent CSV data URL from RDS
     const dataFileUrl = await db.getLatestUrl(client);
 
@@ -44,6 +50,7 @@ async function runUpdate() {
         // TODO validate
         records.push(record);
       }
+      // It may also be possble to batch insert from here in chunks rather than load all records into memory.
     });
 
     parser.on('error', error => {

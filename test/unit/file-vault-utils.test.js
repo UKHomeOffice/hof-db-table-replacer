@@ -9,7 +9,7 @@ jest.mock('../../config.js', () => {
   const originalModule = jest.requireActual('../../config.js');
   return {
     ...originalModule,
-    keycloak: { tokenUrl: 'https://...' }
+    keycloak: { tokenUrl: fakeUrl }
   };
 });
 

@@ -52,6 +52,7 @@ async function runUpdate() {
     });
 
     parser.on('end', async () => {
+      // eslint-disable-next-line no-console
       console.log(records);
       logger.log('info', `Records parsed from rows ${records[0].cepr} to ${records[records.length - 1].cepr}`);
     });

@@ -2,6 +2,8 @@
 const config = require('../../config');
 const { targetTable, sourceFileTable } = config.service;
 
+const logger = require('../../lib/logger')({ env: config.env });
+
 module.exports = class PgpModel {
   constructor() {
     this.requestTimeout = config.requestTimeout;
@@ -19,6 +21,7 @@ module.exports = class PgpModel {
           resolve(data.url);
         })
         .catch(error => {
+          logger.log('error', 'Error retrieving CSV URL');
           reject(error);
         });
     });

@@ -12,6 +12,11 @@ const Model = require(`./db/models/${config.db.model}`);
 const db = new Model();
 
 async function runUpdate() {
+  if (!config.service.serviceName) {
+    logger.log('error', 'No service name detected in config');
+    return;
+  }
+
   logger.log('info', `Preparing table update for ${config.service.serviceName}`);
 
   try {
@@ -36,7 +41,7 @@ async function runUpdate() {
     const parser = parse({ from: 2, trim: true, columns: ['cepr', 'dob', 'dtr']});
 
     axiosStream.on('error', error => {
-      logger.log('error', 'Axios stream error: ', error.message);
+      logger.log('error', `Axios stream error: ${error.message}`);
       throw error;
     });
 
@@ -54,7 +59,7 @@ async function runUpdate() {
     });
 
     parser.on('error', error => {
-      logger.log('error', 'CSV parsing error: ', error.message);
+      logger.log('error', `CSV parsing error: ${error.message}`);
       throw error;
     });
 
@@ -67,7 +72,7 @@ async function runUpdate() {
     // Start streaming data from Axios into CSV parser
     axiosStream.pipe(parser);
   } catch (error) {
-    logger.log('error', 'error:', error);
+    logger.log('error', `${error.message}`);
   }
 }
 

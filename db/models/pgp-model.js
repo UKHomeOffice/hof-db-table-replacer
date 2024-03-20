@@ -16,7 +16,7 @@ module.exports = class PgpModel {
 
   getLatestUrl(pgp) {
     return new Promise((resolve, reject) => {
-      pgp.one('SELECT url FROM $1~ ORDER BY id DESC LIMIT 1', this.sourceFileTable)
+      pgp.one('SELECT url, created_at FROM $1~ ORDER BY id DESC LIMIT 1', this.sourceFileTable)
         .then(data => {
           resolve(data.url);
         })

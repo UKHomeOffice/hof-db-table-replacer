@@ -16,7 +16,7 @@ module.exports = class KnexPostgresModel {
 
   async getLatestUrl(knex) {
     try {
-      const result = await knex.select('url')
+      const result = await knex.select('url', 'created_at')
         .from(this.sourceFileTable)
         .orderBy('id', 'desc')
         .limit(1)

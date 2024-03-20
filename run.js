@@ -1,5 +1,7 @@
 /* eslint-disable no-cond-assign */
 const config = require('./config');
+const { serviceName } = config.service;
+const { targetColumns } = require(`./services/${serviceName}/config`);
 
 const axios = require('axios');
 const { parse } = require('csv-parse');
@@ -12,12 +14,12 @@ const Model = require(`./db/models/${config.db.model}`);
 const db = new Model();
 
 async function runUpdate() {
-  if (!config.service.serviceName) {
+  if (!serviceName) {
     logger.log('error', 'No service name detected in config');
     return;
   }
 
-  logger.log('info', `Preparing table update for ${config.service.serviceName}`);
+  logger.log('info', `Preparing table update for ${serviceName}`);
 
   try {
     // Log memory usage over time.
@@ -30,7 +32,7 @@ async function runUpdate() {
     const dataFileUrl = await db.getLatestUrl(client);
 
     // Authenticate with Keycloak and receive token
-    const fvToken = await fv.auth();
+    const fvToken = config.keycloak.tokenUrl ? await fv.auth() : undefined;
 
     // Get the data file as a stream using URL and token
     const response = await axios(fv.fileRequestConfig(dataFileUrl, fvToken));
@@ -38,7 +40,7 @@ async function runUpdate() {
 
     // Setup CSV parser
     const records = [];
-    const parser = parse({ from: 2, trim: true, columns: ['cepr', 'dob', 'dtr']});
+    const parser = parse({ from: 2, trim: true, columns: targetColumns ?? true });
 
     axiosStream.on('error', error => {
       logger.log('error', `Axios stream error: ${error.message}`);

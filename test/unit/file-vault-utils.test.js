@@ -54,17 +54,27 @@ describe('The auth() function', () => {
 });
 
 describe('The fileRequestConfig() function', () => {
-  const bearer = { bearer: fakeToken };
-  const config = fv.fileRequestConfig(fakeUrl, bearer);
-
   test('should return an object type', () => {
+    const bearer = { bearer: fakeToken };
+    const config = fv.fileRequestConfig(fakeUrl, bearer);
     expect(typeof config === 'object').toBe(true);
   });
 
   test('returned object should have all necessary properties', () => {
+    const bearer = { bearer: fakeToken };
+    const config = fv.fileRequestConfig(fakeUrl, bearer);
     expect(config).toHaveProperty('url', fakeUrl);
     expect(config).toHaveProperty('method', 'get');
     expect(config).toHaveProperty('responseType', 'stream');
     expect(config).toHaveProperty('headers.Authorization', `Basic ${fakeToken}`);
+  });
+
+  test('Returns a config object without auth headers if no auth token is supplied', () => {
+    const bearer = undefined;
+    const config = fv.fileRequestConfig(fakeUrl, bearer);
+    expect(config).toHaveProperty('url', fakeUrl);
+    expect(config).toHaveProperty('method', 'get');
+    expect(config).toHaveProperty('responseType', 'stream');
+    expect(config).not.toHaveProperty('headers.Authorization', `Basic ${fakeToken}`);
   });
 });

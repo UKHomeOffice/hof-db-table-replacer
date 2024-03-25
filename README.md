@@ -58,15 +58,19 @@ If creating a new service you can add a new folder within /services named as the
 
 ```javascript
 module.exports = {
-  targetColumns: ['array', 'of', 'strings'], // OPTIONAL. If your target table's column names are different to those in the original CSV (e.g. the CSV column names are in a format that can't be used in SQL commands) list the target table's columns here. Remove this property if there is no need to alter the column names during processing.
-  validations: [
-    function validationOne(row) {},
-    function validationTwo(row) {},
-    function validationThree(row) {}
-  ] // OPTIONAL. Add functions to run against the data where the row is added as an argument.
+  targetColumns: ['array', 'of', 'strings'],
+  validateRecord: function (record) {return { valid: true }}
 };
 
 ```
+
+Both options in this exported config object are optional.
+
+When the csv-parse module parses CSV it creates an object for each record of key/value pairs where the key is the column name and the value is the entry in that column in the CSV row. The object has a key/value pair for each column. `targetColumns` can optionally be defined as an array if you want to replace the CSV column names with something else in the parsed object - for example if the CSV column name is in a longform string format that is inconvenient to work with. This array must have a length the same as the number of columns in the CSV and an item to replace each column name from left to right. If this property is not exported the parsed object will use the CSV column names by default.
+
+If the `validateRecord` property is defined as a function with one `record` argument the script will use that function to validate records row by row. The function must return at least an object with a bool type `valid` property. e.g. `{ valid: true }`. Records returning `{ valid: true }` from this function are added to the `records` array, those that return `{ valid: false }` are added to the `invalidRecords` array. Check existing implementation for examples.
+
+If no `validateRecord` propery is defined then the script will add all CSV rows to `records` without validation.
 
 ### Keycloak
 

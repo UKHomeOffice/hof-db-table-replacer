@@ -1,11 +1,9 @@
 module.exports = {
   targetColumns: ['cepr', 'dob', 'dtr'],
-  validator: {
-    records: validateRecords
-  }
+  validateRecord: validateRecord
 };
 
-function validateRecords(record) {
+function validateRecord(record) {
   const { cepr, dob, dtr } = record;
   const invalidReasons = [];
   const report = {
@@ -25,8 +23,7 @@ function validateRecords(record) {
     invalidReasons.push('Invalid DOB format');
   };
 
-  const dtrValue = dtr.toLowerCase();
-  const validDtr = (dtrValue === 'yes' || dtrValue === 'no') ? true : false;
+  const validDtr = (dtr === 'Yes' || dtr === 'No') ? true : false;
   if (!validDtr) {
     report.valid = false;
     invalidReasons.push('Invalid Duty to remove alert value');

@@ -13,6 +13,12 @@ const client = require(`./db/${config.db.client}`);
 const Model = require(`./db/models/${config.db.model}`);
 const db = new Model();
 
+// Log memory usage over time.
+// TODO Remove this before prod
+// setInterval(() => {
+//   logger.log('info', `Used: ${process.memoryUsage().heapUsed / 1024 / 1024}`);
+// }, 50);
+
 async function runUpdate() {
   if (!serviceName) {
     logger.log('error', 'No service name detected in config');
@@ -22,12 +28,6 @@ async function runUpdate() {
   logger.log('info', `Preparing table update for ${serviceName}`);
 
   try {
-    // Log memory usage over time.
-    // TODO Remove this before prod
-    // setInterval(() => {
-    //   logger.log('info', `Used: ${process.memoryUsage().heapUsed / 1024 / 1024}`);
-    // }, 50);
-
     // Get the most recent CSV data URL from RDS
     logger.log('info', 'Getting data file location from RDS');
     const dataFileUrl = await db.getLatestUrl(client);

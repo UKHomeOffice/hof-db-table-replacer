@@ -105,7 +105,7 @@ steps:
       TOLERATE: MEDIUM,HIGH,CRITICAL
       FAIL_ON_DETECTION: false
       IGNORE_UNFIXED: true
-    #  ALLOW_CVE_LIST_FILE: hof-services-config/Electronic_Travel_Authorisation/trivy-cve-exceptions.txt
+      ALLOW_CVE_LIST_FILE: trivy-cve-exceptions.txt
     when:
       event:
       - pull_request
@@ -158,7 +158,7 @@ steps:
       SEVERITY: MEDIUM,HIGH,CRITICAL
       FAIL_ON_DETECTION: false
       IGNORE_UNFIXED: true
-    #  ALLOW_CVE_LIST_FILE: hof-services-config/Electronic_Travel_Authorisation/trivy-cve-exceptions.txt
+      ALLOW_CVE_LIST_FILE: trivy-cve-exceptions.txt
     when:
       cron: security_scans
       event: cron

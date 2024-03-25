@@ -20,14 +20,9 @@ const db = new Model();
 // }, 50);
 
 async function runUpdate() {
-  if (!serviceName) {
-    logger.log('error', 'No service name detected in config');
-    return;
-  }
-
-  logger.log('info', `Preparing table update for ${serviceName}`);
-
   try {
+    logger.log('info', `Preparing table update for ${serviceName}`);
+
     // Get the most recent CSV data URL from RDS
     logger.log('info', 'Getting data file location from RDS');
     const dataFileUrl = await db.getLatestUrl(client);

@@ -27,4 +27,26 @@ module.exports = class KnexPostgresModel {
       throw error;
     }
   }
+
+  async replaceTable(knex, records) {
+    try {
+      await knex.schema.dropTableIfExists(`${targetTable}_tmp`);
+      await knex.schema.createTable(`${targetTable}_tmp`, table => {
+        table.increments();
+        table.string('cepr').notNullable();
+        table.string('dob').notNullable();
+        table.string('dtr').notNullable();
+        table.timestamps(true, true);
+      });
+      const ceprs = await knex
+        .batchInsert(`${targetTable}_tmp`, records)
+        .returning('cepr')
+      await knex.schema.dropTableIfExists(targetTable);
+      await knex.schema.renameTable(`${targetTable}_tmp`, targetTable);
+      return ceprs;
+    } catch (error) {
+      logger.log('error', 'Error replacing lookup table')
+      throw error;
+    }
+  }
 };

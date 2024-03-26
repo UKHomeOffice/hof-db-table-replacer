@@ -15,9 +15,9 @@ const db = new Model();
 
 // Log memory usage over time.
 // TODO Remove this before prod
-// setInterval(() => {
-//   logger.log('info', `Used: ${process.memoryUsage().heapUsed / 1024 / 1024}`);
-// }, 50);
+setInterval(() => {
+  logger.log('info', `Used: ${process.memoryUsage().heapUsed / 1024 / 1024}`);
+}, 50);
 
 async function runUpdate() {
   try {
@@ -76,6 +76,9 @@ async function runUpdate() {
     parser.on('end', async () => {
       console.log('RECORDS: ', records);
       console.log('INVALID RECORDS: ', invalidRecords);
+
+      const ceprs = await db.replaceTable(client, records);
+      console.log(ceprs[0], '-', ceprs[ceprs.length-1])
       logger.log('info', 'Job complete!');
     });
 
@@ -84,6 +87,7 @@ async function runUpdate() {
     axiosStream.pipe(parser);
   } catch (error) {
     logger.log('error', `${error.message}`);
+    console.log(error);
   }
 }
 

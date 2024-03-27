@@ -13,12 +13,6 @@ const client = require(`./db/${config.db.client}`);
 const Model = require(`./db/models/${config.db.model}`);
 const db = new Model();
 
-// Log memory usage over time.
-// TODO Remove this before prod
-// setInterval(() => {
-//   logger.log('info', `Used: ${process.memoryUsage().heapUsed / 1024 / 1024}`);
-// }, 50);
-
 async function runUpdate() {
   try {
     logger.log('info', `Preparing table update for ${serviceName}`);

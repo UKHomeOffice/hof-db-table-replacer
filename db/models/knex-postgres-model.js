@@ -28,24 +28,38 @@ module.exports = class KnexPostgresModel {
     }
   }
 
-  async replaceTable(knex, records) {
+  async createTempLookupTable(knex) {
     try {
-      await knex.schema.dropTableIfExists(`${targetTable}_tmp`);
-      await knex.schema.createTable(`${targetTable}_tmp`, table => {
+      await knex.schema.dropTableIfExists(`${this.targetTable}_tmp`);
+      const string = await knex.schema.createTable(`${this.targetTable}_tmp`, table => {
         table.increments();
         table.string('cepr').notNullable();
         table.string('dob').notNullable();
         table.string('dtr').notNullable();
         table.timestamps(true, true);
-      });
-      const ceprs = await knex
-        .batchInsert(`${targetTable}_tmp`, records)
-        .returning('cepr')
-      await knex.schema.dropTableIfExists(targetTable);
-      await knex.schema.renameTable(`${targetTable}_tmp`, targetTable);
-      return ceprs;
+      }).toString();
+      console.log(string);
     } catch (error) {
-      logger.log('error', 'Error replacing lookup table')
+      logger.log('error', 'Error setting up temporary lookup table')
+      throw error;
+    }
+  }
+
+  async insertRecords(knex, records) {
+    try {
+      await knex.batchInsert(`${this.targetTable}_tmp`, records);
+    } catch (error) {
+      logger.log('error', 'Error during records insert')
+      throw error;
+    }
+  }
+
+  async replaceLookupTable(knex) {
+    try {
+      await knex.schema.dropTableIfExists(this.targetTable);
+      await knex.schema.renameTable(`${this.targetTable}_tmp`, this.targetTable);
+    } catch (error) {
+      logger.log('error', 'Error during table replacement')
       throw error;
     }
   }

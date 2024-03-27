@@ -13,12 +13,6 @@ const client = require(`./db/${config.db.client}`);
 const Model = require(`./db/models/${config.db.model}`);
 const db = new Model();
 
-// Log memory usage over time.
-// TODO Remove this before prod
-setInterval(() => {
-  logger.log('info', `Used: ${process.memoryUsage().heapUsed / 1024 / 1024}`);
-}, 50);
-
 async function runUpdate() {
   try {
     logger.log('info', `Preparing table update for ${serviceName}`);
@@ -37,7 +31,6 @@ async function runUpdate() {
     const axiosStream = response.data;
 
     // Setup CSV parser
-    const records = [];
     const invalidRecords = [];
     const parser = parse({ from: 2, trim: true, columns: targetColumns ?? true });
 
@@ -50,7 +43,9 @@ async function runUpdate() {
       parser.end();
     });
 
-    parser.on('readable', () => {
+    parser.on('readable', async () => {
+      axiosStream.pause();
+      const records = [];
       let record;
       while ((record = parser.read()) !== null) {
         // Validate records against function set in service config.
@@ -65,6 +60,10 @@ async function runUpdate() {
           records.push(record);
         }
       }
+
+      console.log('RECORDS: ', records);
+      await db.insertRecords(client, records)
+      axiosStream.resume();
       // It may also be possble to batch insert from here in chunks rather than load all records into memory.
     });
 
@@ -74,13 +73,14 @@ async function runUpdate() {
     });
 
     parser.on('end', async () => {
-      console.log('RECORDS: ', records);
+      await db.replaceLookupTable(client);
       console.log('INVALID RECORDS: ', invalidRecords);
-
-      const ceprs = await db.replaceTable(client, records);
-      console.log(ceprs[0], '-', ceprs[ceprs.length-1])
       logger.log('info', 'Job complete!');
     });
+
+    // Setup temporary lookup table to receive data
+    logger.log('info', 'Preparing temporary lookup table');
+    await db.createTempLookupTable(client)
 
     // Start streaming data from Axios into CSV parser
     logger.log('info', 'Streaming CSV data from data file');
@@ -88,6 +88,7 @@ async function runUpdate() {
   } catch (error) {
     logger.log('error', `${error.message}`);
     console.log(error);
+    return
   }
 }
 

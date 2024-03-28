@@ -14,6 +14,13 @@ A Node.js script for replacing database lookup tables as a scheduled job configu
 
 The script retrieves a CSV formatted file from a given location, validates against given rules and then replaces a lookup table using the CSV rows. On success or failure the script will send appropriate notification messages.
 
+This script only makes certain assumptions about the service it will update the RDS lookup table for:
+
+1. That the service runs an RDS (e.g PostgreSQL database).
+2. That the service's RDS has a named table with at least columns 'id', 'url' and 'created_at' where http(s) links to CSV data can be fetched from.
+3. That the service's RDS has an existing, named table with the appropriate columns that can be dropped and replaced completely by a copy containing the latest CSV data.
+4. That the script will need to autheticate with Keycloak and provide a token with its incoming data request, or the data source requires no authentication. See [Keycloak](#keycloak).
+
 This repository currently offers either [pg-promise](https://vitaly-t.github.io/pg-promise/index.html) or [knex.js](https://knexjs.org/) to handle db connection and query building. You can configure the client and model used using environment variables.
 
 Some [documentation of the high level design process for the lookup replacer](https://collaboration.homeoffice.gov.uk/display/DSASS/High+Level+Ellaboration+-+IMB-68) can be found in the HOF Confluence.
@@ -45,11 +52,31 @@ The /db/models folder contains models for available clients providing exported c
 
 ### Service
 
-The /services folder contains service specific configuration that is difficult to inject as environment variables - such as validation rules. Setting the `SERVICE_NAME` environment variable to one of the service name subfolders in /services should allow the app to run with that folder's specific configurations.
+The /services folder contains service specific configuration. Setting the `SERVICE_NAME` environment variable correctly for your intended service should allow the app to run with that service's specific configurations.
+
+If creating a new service you can add a new folder within /services named as the shortname for your service (e.g. asc, ima, acq). Within that folder add a `config.js` as follows:
+
+```javascript
+module.exports = {
+  targetColumns: ['array', 'of', 'strings'],
+  validateRecord: function (record) {return { valid: true }}
+};
+
+```
+
+Both options in this exported config object are optional.
+
+When the csv-parse module parses CSV it creates an object for each record of key/value pairs where the key is the column name and the value is the entry in that column in the CSV row. The object has a key/value pair for each column. `targetColumns` can optionally be defined as an array if you want to replace the CSV column names with something else in the parsed object - for example if the CSV column name is in a longform string format that is inconvenient to work with. This array must have a length the same as the number of columns in the CSV and an item to replace each column name from left to right. If this property is not exported the parsed object will use the CSV column names by default.
+
+If the `validateRecord` property is defined as a function with one `record` argument the script will use that function to validate records row by row. The function must return at least an object with a bool type `valid` property. e.g. `{ valid: true }`. Records returning `{ valid: true }` from this function are added to the `records` array, those that return `{ valid: false }` are added to the `invalidRecords` array. Check existing implementation for examples.
+
+If no `validateRecord` propery is defined then the script will add all CSV rows to `records` without validation.
 
 ### Keycloak
 
 This script must authenticate with the service's Keycloak realm and receive a bearer token to allow authorised requests to the service's file-vault. Keycloak auth secrets are configured as environment variables.
+
+It is possible to use a data source that is not protected by Keycloak as long as it either a) supports the same auth protocols as Keycloak in which case environment variables can be substituted like for like, or b) if your data source does not require auth at all. In this case if no Keycloak token URL is provided to the environment the script will not attempt to auth and will pass `undefined` into the Axios data request config - meaning no auth headers are added to the outgoing request to the data URL.
 
 ## Build and run
 
@@ -68,8 +95,8 @@ The purpose of this service is to be run as a scheduled job from the main servic
 ```bash
 NODE_ENV # Set to 'local' for local development and testing
 SERVICE_NAME # Shortname for the service to configure validations e.g. ima
-TARGET_TABLE # Target lookup table name to be replaced in the database
-SOURCE_FILE_TABLE # DB table name where this service can get the CSV file's URL from
+TARGET_TABLE # The name of the table in the service RDS where the URLs for uploaded CSV data are stored e.g. csv_urls
+SOURCE_FILE_TABLE # The name of the target table to replace with the newer CSV data. e.g. cepr_lookup
 KEYCLOAK_SECRET # Keycloak secrets to authenticate for retrieval from S3 via file-vault (assuming this is the CSV's persistent location)
 KEYCLOAK_CLIENT_ID
 KEYCLOAK_USERNAME

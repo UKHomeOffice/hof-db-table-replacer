@@ -38,8 +38,9 @@
       "**/*.js",
       "!**/node_modules/**",
       "!**/coverage/**",
-      "!**/config.js",
-      "!**/logger.js"
+      "!config.js",
+      "!**/logger.js",
+      "!**/db/*"
     ]
   }
 }

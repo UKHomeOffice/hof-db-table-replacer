@@ -2,6 +2,8 @@
 const config = require('../../config');
 const { targetTable, sourceFileTable } = config.service;
 
+const logger = require('../../lib/logger')({ env: config.env });
+
 module.exports = class PgpModel {
   constructor() {
     this.requestTimeout = config.requestTimeout;
@@ -14,11 +16,12 @@ module.exports = class PgpModel {
 
   getLatestUrl(pgp) {
     return new Promise((resolve, reject) => {
-      pgp.one('SELECT url FROM $1~ ORDER BY id DESC LIMIT 1', this.sourceFileTable)
+      pgp.one('SELECT url, created_at FROM $1~ ORDER BY id DESC LIMIT 1', this.sourceFileTable)
         .then(data => {
           resolve(data.url);
         })
         .catch(error => {
+          logger.log('error', 'Error retrieving CSV URL');
           reject(error);
         });
     });

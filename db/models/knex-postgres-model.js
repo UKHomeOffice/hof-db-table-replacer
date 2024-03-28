@@ -2,6 +2,8 @@
 const config = require('../../config');
 const { targetTable, sourceFileTable } = config.service;
 
+const logger = require('../../lib/logger')({ env: config.env });
+
 module.exports = class KnexPostgresModel {
   constructor() {
     this.requestTimeout = config.requestTimeout;
@@ -13,11 +15,16 @@ module.exports = class KnexPostgresModel {
   }
 
   async getLatestUrl(knex) {
-    const result = await knex.select('url')
-      .from(this.sourceFileTable)
-      .orderBy('id', 'desc')
-      .limit(1)
-      .timeout(this.requestTimeout);
-    return result[0].url;
+    try {
+      const result = await knex.select('url', 'created_at')
+        .from(this.sourceFileTable)
+        .orderBy('id', 'desc')
+        .limit(1)
+        .timeout(this.requestTimeout);
+      return result[0].url;
+    } catch (error) {
+      logger.log('error', 'Error retrieving CSV URL');
+      throw error;
+    }
   }
 };

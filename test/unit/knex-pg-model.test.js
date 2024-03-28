@@ -1,6 +1,14 @@
 const Model = require('../../db/models/knex-postgres-model');
 const db = new Model();
 
+jest.mock('../../config.js', () => {
+  const originalModule = jest.requireActual('../../config.js');
+  return {
+    ...originalModule,
+    service: { serviceName: 'ima' }
+  };
+});
+
 describe('The database model method getLatestUrl()', () => {
   let client;
   beforeAll(() => {

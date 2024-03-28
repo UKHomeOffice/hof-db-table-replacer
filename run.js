@@ -1,7 +1,7 @@
 /* eslint-disable no-cond-assign */
 const config = require('./config');
 const { serviceName } = config.service;
-const { targetColumns, validateRecord } = require(`./services/${serviceName}/config`);
+const { parseHeadings, validateRecord } = require(`./services/${serviceName}/config`);
 
 const axios = require('axios');
 const { parse } = require('csv-parse');
@@ -32,7 +32,7 @@ async function runUpdate() {
 
     // Setup CSV parser
     const invalidRecords = [];
-    const parser = parse({ from: 2, trim: true, columns: targetColumns ?? true });
+    const parser = parse({ from: 2, trim: true, columns: parseHeadings ?? true });
 
     axiosStream.on('error', error => {
       logger.log('error', `Axios stream error: ${error.message}`);
@@ -62,7 +62,9 @@ async function runUpdate() {
       }
 
       console.log('RECORDS: ', records);
-      await db.insertRecords(client, records)
+      if (records.length) {
+        await db.insertRecords(client, records);
+      }
       axiosStream.resume();
       // It may also be possble to batch insert from here in chunks rather than load all records into memory.
     });
@@ -80,14 +82,14 @@ async function runUpdate() {
 
     // Setup temporary lookup table to receive data
     logger.log('info', 'Preparing temporary lookup table');
+    await db.dropTempLookupTable(client);
     await db.createTempLookupTable(client)
 
     // Start streaming data from Axios into CSV parser
     logger.log('info', 'Streaming CSV data from data file');
     axiosStream.pipe(parser);
   } catch (error) {
-    logger.log('error', `${error.message}`);
-    console.log(error);
+    logger.log('error', error);
     return
   }
 }

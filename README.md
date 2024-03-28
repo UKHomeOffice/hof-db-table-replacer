@@ -58,15 +58,18 @@ If creating a new service you can add a new folder within /services named as the
 
 ```javascript
 module.exports = {
-  targetColumns: ['array', 'of', 'strings'],
-  validateRecord: function (record) {return { valid: true }}
+  targetColumns: ['array', 'of', 'strings'], // REQUIRED
+  parseHeadings: ['array', 'of', 'strings'], // OPTIONAL
+  validateRecord: function (record) {return { valid: true }} // OPTIONAL
 };
 
 ```
 
-Both options in this exported config object are optional.
+`targetColumns` is a required property of this export for each service as it defines an array of database column names the script will target to add CSV data to. If using `parseHeadings` then the target column names should be the same as the equivalent parsed object key names. If not using `parseHeadings` the target column names should be the same as the CSV column header names.
 
-When the csv-parse module parses CSV it creates an object for each record of key/value pairs where the key is the column name and the value is the entry in that column in the CSV row. The object has a key/value pair for each column. `targetColumns` can optionally be defined as an array if you want to replace the CSV column names with something else in the parsed object - for example if the CSV column name is in a longform string format that is inconvenient to work with. This array must have a length the same as the number of columns in the CSV and an item to replace each column name from left to right. If this property is not exported the parsed object will use the CSV column names by default.
+`parseHeadings` is an optional property of this export for each service. During parsing the items in `parseHeadings` will replace the CSV column headings as keys for each record object. The order of items in `parseHeadings` should be the same as the order that headings appear in the CSV. That way during parsing the data is assigned to the correct property. If used, the length of `parseHeadings` should be the same as the number of column headings with a replacement for each heading. These can be the same as the original headings if desired.
+
+If there are columns in the CSV that do not need to be inserted to the database, include the column in `parseHeadings` (if used), this will ensure that CSV data is parsed into the correct object properties. Whether using `parseHeadings` or not you can remove additional properties from parsed records before insertion in a `validateRecord` function. Ensure that `targetColumns` only includes database columns you want to insert, and that record objects have a key/value for each of those columns.
 
 If the `validateRecord` property is defined as a function with one `record` argument the script will use that function to validate records row by row. The function must return at least an object with a bool type `valid` property. e.g. `{ valid: true }`. Records returning `{ valid: true }` from this function are added to the `records` array, those that return `{ valid: false }` are added to the `invalidRecords` array. Check existing implementation for examples.
 

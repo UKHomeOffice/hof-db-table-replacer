@@ -1,6 +1,7 @@
 /* eslint-disable no-console */
 const config = require('../../config');
-const { targetTable, sourceFileTable } = config.service;
+const { serviceName, targetTable, sourceFileTable } = config.service;
+const { targetColumns } = require(`../../services/${serviceName}/config`);
 
 const logger = require('../../lib/logger')({ env: config.env });
 
@@ -9,6 +10,7 @@ module.exports = class KnexPostgresModel {
     this.requestTimeout = config.requestTimeout;
     this.targetTable = targetTable;
     this.sourceFileTable = sourceFileTable;
+    this.targetColumns = targetColumns;
 
     this.notifyModel = () => console.log('Using Knex...');
     this.notifyModel();
@@ -28,17 +30,18 @@ module.exports = class KnexPostgresModel {
     }
   }
 
-  async createTempLookupTable(knex) {
+  async dropTempLookupTable(knex) {
     try {
       await knex.schema.dropTableIfExists(`${this.targetTable}_tmp`);
-      const string = await knex.schema.createTable(`${this.targetTable}_tmp`, table => {
-        table.increments();
-        table.string('cepr').notNullable();
-        table.string('dob').notNullable();
-        table.string('dtr').notNullable();
-        table.timestamps(true, true);
-      }).toString();
-      console.log(string);
+    } catch (error) {
+      logger.log('error', 'Error dropping temporary lookup table');
+      throw error;
+    }
+  }
+
+  async createTempLookupTable(knex) {
+    try {
+      await knex.schema.createTableLike(`${this.targetTable}_tmp`, this.targetTable);
     } catch (error) {
       logger.log('error', 'Error setting up temporary lookup table')
       throw error;

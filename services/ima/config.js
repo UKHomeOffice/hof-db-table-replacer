@@ -1,5 +1,6 @@
 module.exports = {
   targetColumns: ['cepr', 'dob', 'dtr'],
+  parseHeadings: ['cepr', 'dob', 'dtr'],
   validateRecord: validateRecord
 };
 

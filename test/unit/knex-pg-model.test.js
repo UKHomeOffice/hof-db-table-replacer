@@ -17,7 +17,9 @@ describe('The database model method getLatestUrl()', () => {
         from: jest.fn(() => ({
           orderBy: jest.fn(() => ({
             limit: jest.fn(() => ({
-              timeout: jest.fn().mockResolvedValue([{ url: 'https://...' }])
+              timeout: jest.fn().mockResolvedValue([
+                { url: 'https://...', created_at: new Date('August 14, 1987 03:17:00').toISOString() }
+              ])
             }))
           }))
         }))
@@ -25,14 +27,33 @@ describe('The database model method getLatestUrl()', () => {
     };
   });
 
-  test('should return a string', async () => {
+  test('should return an onject with correct properties', async () => {
     return db.getLatestUrl(client).then(data => {
-      expect(typeof data).toBe('string');
+      expect(data).toHaveProperty('url', 'https://...');
+      expect(data).toHaveProperty('created_at', '1987-08-14T02:17:00.000Z');
     });
   });
+
   test('should return a URL', async () => {
     return db.getLatestUrl(client).then(data => {
-      expect(data).toContain('https://');
+      expect(data.url).toContain('https://');
+    });
+  });
+
+  test('returns an error if failing', async () => {
+    client = {
+      select: jest.fn(() => ({
+        from: jest.fn(() => ({
+          orderBy: jest.fn(() => ({
+            limit: jest.fn(() => ({
+              timeout: jest.fn().mockRejectedValue(new Error('Url retrieval failed'))
+            }))
+          }))
+        }))
+      }))
+    };
+    return db.getLatestUrl(client).catch(error => {
+      expect(error.message).toEqual('Url retrieval failed');
     });
   });
 });

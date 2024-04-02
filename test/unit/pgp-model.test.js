@@ -13,19 +13,22 @@ describe('The database model method getLatestUrl()', () => {
   let client;
   beforeAll(() => {
     client = {
-      one: jest.fn().mockResolvedValue({ url: 'https://...' })
+      one: jest.fn().mockResolvedValue({
+        url: 'https://...', created_at: new Date('August 14, 1987 03:17:00').toISOString()
+      })
     };
   });
 
-  test('should return a string', async () => {
+  test('should return an onject with correct properties', async () => {
     return db.getLatestUrl(client).then(data => {
-      expect(typeof data).toBe('string');
+      expect(data).toHaveProperty('url', 'https://...');
+      expect(data).toHaveProperty('created_at', '1987-08-14T02:17:00.000Z');
     });
   });
 
   test('should return a URL', async () => {
     return db.getLatestUrl(client).then(data => {
-      expect(data).toContain('https://');
+      expect(data.url).toContain('https://');
     });
   });
 

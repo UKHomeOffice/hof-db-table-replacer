@@ -1,7 +1,8 @@
-/* eslint-disable no-console */
+/* eslint-disable no-console, no-shadow, consistent-return */
 const config = require('../../config');
 const { serviceName, targetTable, sourceFileTable } = config.service;
-const { targetColumns } = require(`../../services/${serviceName}/config`)
+const { insertBatchSize } = config.db;
+const { targetColumns } = require(`../../services/${serviceName}/config`);
 
 const logger = require('../../lib/logger')({ env: config.env });
 
@@ -20,7 +21,7 @@ module.exports = class PgpModel {
     return new Promise((resolve, reject) => {
       pgp.one('SELECT url, created_at FROM $1~ ORDER BY id DESC LIMIT 1', this.sourceFileTable)
         .then(data => {
-          resolve(data.url);
+          resolve(data);
         })
         .catch(error => {
           logger.log('error', 'Error retrieving CSV URL');
@@ -32,24 +33,24 @@ module.exports = class PgpModel {
   async dropTempLookupTable(pgp) {
     return new Promise((resolve, reject) => {
       pgp.result('drop table if exists $1~', `${this.targetTable}_tmp`)
-        .then((data) => {
+        .then(data => {
           resolve(data);
         })
         .catch(error => {
-          logger.log('error', 'Error dropping temporary lookup table')
+          logger.log('error', 'Error dropping temporary lookup table');
           reject(error);
         });
-    })
+    });
   }
 
   async createTempLookupTable(pgp) {
     return new Promise((resolve, reject) => {
       pgp.result('create table $1~ (LIKE $2~)', [`${this.targetTable}_tmp`, this.targetTable])
-        .then((data) => {
+        .then(data => {
           resolve(data);
         })
         .catch(error => {
-          logger.log('error', 'Error setting up temporary lookup table')
+          logger.log('error', 'Error setting up temporary lookup table');
           reject(error);
         });
     });
@@ -58,13 +59,33 @@ module.exports = class PgpModel {
   async insertRecords(pgp, records) {
     return new Promise((resolve, reject) => {
       const cs = new pgp.$config.pgp.helpers.ColumnSet(this.targetColumns, {table: `${this.targetTable}_tmp`});
-      const insert = pgp.$config.pgp.helpers.insert(records, cs);
-      pgp.none(insert)
-        .then(() => {
+      let index = 0;
+
+      function getNextData(pageIndex) {
+        return new Promise(resolve => {
+          const batch = records.slice(pageIndex, pageIndex + insertBatchSize);
+          if (batch.length) {
+            index += insertBatchSize;
+            resolve(batch);
+          } else resolve(null);
+        });
+      }
+
+      pgp.tx('massive-insert', t => {
+        const processData = data => {
+          if (data) {
+            const insert = pgp.$config.pgp.helpers.insert(data, cs);
+            return t.none(insert);
+          }
+        };
+        return t.sequence(() => getNextData(index).then(processData));
+      })
+        .then(data => {
+          logger.log('info', `Total batches: ${data.total}, Duration: ${data.duration}`);
           resolve();
         })
         .catch(error => {
-          logger.log('error', 'Error during records insert')
+          logger.log('error', 'Error during records insert');
           reject(error);
         });
     });
@@ -72,15 +93,17 @@ module.exports = class PgpModel {
 
   async replaceLookupTable(pgp) {
     return new Promise((resolve, reject) => {
-      pgp.result('drop table if exists $1~', this.targetTable)
-        .then(() => {
-          pgp.result('alter table $1~ RENAME TO $2~', [`${this.targetTable}_tmp`, this.targetTable])
-        })
-        .then((data) => {
+      pgp.tx('replacement-transaction', t => {
+        return t.result('drop table if exists $1~', this.targetTable)
+          .then(() => {
+            return t.result('alter table $1~ RENAME TO $2~', [`${this.targetTable}_tmp`, this.targetTable]);
+          });
+      })
+        .then(data => {
           resolve(data);
         })
         .catch(error => {
-          logger.log('error', 'Error during table replacement')
+          logger.log('error', 'Error during table replacement');
           reject(error);
         });
     });

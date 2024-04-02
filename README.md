@@ -23,6 +23,8 @@ This script only makes certain assumptions about the service it will update the 
 
 This repository currently offers either [pg-promise](https://vitaly-t.github.io/pg-promise/index.html) or [knex.js](https://knexjs.org/) to handle db connection and query building. You can configure the client and model used using environment variables.
 
+To optimise potentially large inserts both models make use of their respective client's batch insert functionality inside SQL transactions. This approach aims to reduce the overheads of making many inserts by queuing them into smaller batches and running sequentially. Please see the batch insert docs for [pg-promise](https://github.com/vitaly-t/pg-promise/wiki/Data-Imports) and [Knex](https://knexjs.org/guide/utility.html#batchinsert) for more information. It may be that in different environment situations one model works better than the other.
+
 Some [documentation of the high level design process for the lookup replacer](https://collaboration.homeoffice.gov.uk/display/DSASS/High+Level+Ellaboration+-+IMB-68) can be found in the HOF Confluence.
 
 ## Script steps
@@ -49,6 +51,8 @@ If you are adding a new database client you should add the package with `yarn ad
 In the /db folder, files will provide an exported connection to a database client with support for local, test and remote configuration.
 
 The /db/models folder contains models for available clients providing exported classes with query methods for the given clients.
+
+The optional `DB_INSERT_BATCH_SIZE` environment variable takes a number which when assigned is the number of records to insert into the database from the entire records array in a single batch. The default is 2000. Tweaking this number may increase performance depending on the size and number of individual records and available resources for Node and SQL servers.
 
 ### Service
 
@@ -109,6 +113,7 @@ CASEWORKER_EMAIL # Email address to send pass/fail notifications to
 NOTIFY_KEY # API key for a GovUK Notify service
 NOTIFY_TEMPLATE_PASS # Template reference ID for GovUK Notify template for success case
 NOTIFY_TEMPLATE_FAIL # Template reference ID for GovUK Notify template for failure case
+DB_INSERT_BATCH_SIZE # Defaults to 1000. OPTIONAL: tweak for the max size of a single DB insert batch
 DB_CLIENT # Choose a DB client to use to interact with the database e.g. 'pgp' or 'knex'. Options are in the /db folder
 DB_MODEL # Choose a DB model appropriate to the client you selected. Options are in the /db/models folder
 ```

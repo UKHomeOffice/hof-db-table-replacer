@@ -102,8 +102,8 @@ The purpose of this service is to be run as a scheduled job from the main servic
 ```bash
 NODE_ENV # Set to 'local' for local development and testing
 SERVICE_NAME # Shortname for the service to configure validations e.g. ima
-TARGET_TABLE # The name of the table in the service RDS where the URLs for uploaded CSV data are stored e.g. csv_urls
-SOURCE_FILE_TABLE # The name of the target table to replace with the newer CSV data. e.g. cepr_lookup
+DB_REPLACER_TARGET_TABLE # The name of the table in the service RDS where the URLs for uploaded CSV data are stored e.g. csv_urls
+DB_REPLACER_SOURCE_FILE_TABLE # The name of the target table to replace with the newer CSV data. e.g. cepr_lookup
 KEYCLOAK_SECRET # Keycloak secrets to authenticate for retrieval from S3 via file-vault (assuming this is the CSV's persistent location)
 KEYCLOAK_CLIENT_ID
 KEYCLOAK_USERNAME

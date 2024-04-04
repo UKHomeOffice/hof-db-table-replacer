@@ -13,6 +13,8 @@ const client = require(`./db/${config.db.client}`);
 const Model = require(`./db/models/${config.db.model}`);
 const db = new Model();
 
+const sendCaseworkerNotification = require('./lib/notify-utils');
+
 async function runUpdate() {
   try {
     logger.log('info', `Preparing table update for ${serviceName}`);
@@ -70,6 +72,7 @@ async function runUpdate() {
     parser.on('end', async () => {
       console.log('RECORDS: ', records);
       console.log('INVALID RECORDS: ', invalidRecords);
+      sendCaseworkerNotification(success=true, invalidRecords);
       logger.log('info', 'Job complete!');
     });
 
@@ -78,6 +81,7 @@ async function runUpdate() {
     axiosStream.pipe(parser);
   } catch (error) {
     logger.log('error', `${error.message}`);
+    sendCaseworkerNotification(success=false, invalidRecords);
   }
 }
 

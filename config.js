@@ -14,8 +14,8 @@ module.exports = {
   },
   service: {
     serviceName: process.env.SERVICE_NAME,
-    targetTable: process.env.TARGET_TABLE,
-    sourceFileTable: process.env.SOURCE_FILE_TABLE
+    targetTable: process.env.DB_REPLACER_TARGET_TABLE,
+    sourceFileTable: process.env.DB_REPLACER_SOURCE_FILE_TABLE
   },
   keycloak: {
     tokenUrl: process.env.KEYCLOAK_TOKEN_URL,
@@ -26,6 +26,8 @@ module.exports = {
   },
   notify: {
     notifyKey: process.env.NOTIFY_KEY,
-    caseworkerEmail: process.env.CASEWORKER_EMAIL
+    caseworkerEmail: process.env.CASEWORKER_EMAIL,
+    successTemplateId: process.env.NOTIFY_TEMPLATE_SUCCESS,
+    failureTemplateId: process.env.NOTIFY_TEMPLATE_FAILURE
   }
 };

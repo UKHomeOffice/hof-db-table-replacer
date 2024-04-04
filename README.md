@@ -59,7 +59,11 @@ If creating a new service you can add a new folder within /services named as the
 ```javascript
 module.exports = {
   targetColumns: ['array', 'of', 'strings'],
-  validateRecord: function (record) {return { valid: true }}
+  validateRecord: function (record) {return { 
+    record: record,
+    valid: true,
+    reasons: ['array', 'of', 'strings']
+  }}
 };
 
 ```
@@ -104,8 +108,8 @@ KEYCLOAK_PASSWORD
 KEYCLOAK_TOKEN_URL
 CASEWORKER_EMAIL # Email address to send pass/fail notifications to
 NOTIFY_KEY # API key for a GovUK Notify service
-NOTIFY_TEMPLATE_PASS # Template reference ID for GovUK Notify template for success case
-NOTIFY_TEMPLATE_FAIL # Template reference ID for GovUK Notify template for failure case
+NOTIFY_TEMPLATE_SUCCESS # Template reference ID for GovUK Notify template for success case
+NOTIFY_TEMPLATE_FAILURE # Template reference ID for GovUK Notify template for failure case
 DB_CLIENT # Choose a DB client to use to interact with the database e.g. 'pgp' or 'knex'. Options are in the /db folder
 DB_MODEL # Choose a DB model appropriate to the client you selected. Options are in the /db/models folder
 ```

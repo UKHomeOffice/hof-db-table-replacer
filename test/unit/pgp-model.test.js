@@ -14,7 +14,7 @@ describe('The database model method getLatestUrl()', () => {
   beforeAll(() => {
     client = {
       one: jest.fn().mockResolvedValue({
-        url: 'https://...', created_at: new Date('August 14, 1987 03:17:00').toISOString()
+        url: 'https://...', created_at: '1987-08-14T02:17:00.000Z'
       })
     };
   });

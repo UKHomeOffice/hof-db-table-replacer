@@ -24,7 +24,8 @@ module.exports = {
     clientId: process.env.KEYCLOAK_CLIENT_ID,
     secret: process.env.KEYCLOAK_SECRET
   },
-  notify: {
+  notifications: {
+    emailModel: process.env.NOTIFICATIONS_MODEL,
     notifyKey: process.env.NOTIFY_KEY,
     caseworkerEmail: process.env.CASEWORKER_EMAIL,
     successTemplateId: process.env.NOTIFY_TEMPLATE_SUCCESS,

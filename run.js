@@ -13,9 +13,12 @@ const client = require(`./db/${config.db.client}`);
 const Model = require(`./db/models/${config.db.model}`);
 const db = new Model();
 
-const sendCaseworkerNotification = require('./lib/notify-utils');
+const EmailModel = require(`./notifications/${config.notifications.emailModel}`)
+const emailer = new EmailModel();
 
 async function runUpdate() {
+  const records = [];
+  const invalidRecords = [];
   try {
     logger.log('info', `Preparing table update for ${serviceName}`);
 
@@ -33,8 +36,6 @@ async function runUpdate() {
     const axiosStream = response.data;
 
     // Setup CSV parser
-    const records = [];
-    const invalidRecords = [];
     const parser = parse({ from: 2, trim: true, columns: targetColumns ?? true });
 
     axiosStream.on('error', error => {
@@ -72,7 +73,8 @@ async function runUpdate() {
     parser.on('end', async () => {
       console.log('RECORDS: ', records);
       console.log('INVALID RECORDS: ', invalidRecords);
-      sendCaseworkerNotification(success=true, invalidRecords);
+      const completeTime = new Date();
+      await emailer.sendCaseworkerSuccessNotification(records.length, invalidRecords, new Date(), completeTime);
       logger.log('info', 'Job complete!');
     });
 
@@ -81,7 +83,8 @@ async function runUpdate() {
     axiosStream.pipe(parser);
   } catch (error) {
     logger.log('error', `${error.message}`);
-    sendCaseworkerNotification(success=false, invalidRecords);
+    const failureTime = new Date();
+    await emailer.sendCaseworkerFailureNotification(error.message, invalidRecords, new Date(), failureTime);
   }
 }
 

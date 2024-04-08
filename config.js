@@ -10,7 +10,8 @@ module.exports = {
     password: process.env.DB_PASS,
     database: process.env.DB_NAME,
     client: process.env.DB_CLIENT,
-    model: process.env.DB_MODEL
+    model: process.env.DB_MODEL,
+    insertBatchSize: +process.env.DB_INSERT_BATCH_SIZE || 2000
   },
   service: {
     serviceName: process.env.SERVICE_NAME,

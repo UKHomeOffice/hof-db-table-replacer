@@ -3,6 +3,7 @@ const config = require('./config');
 const { serviceName } = config.service;
 const { parseHeadings, validateRecord } = require(`./services/${serviceName}/config`);
 
+const { pipeline } = require('node:stream/promises');
 const axios = require('axios');
 const { parse } = require('csv-parse');
 
@@ -18,8 +19,14 @@ const emailer = new EmailModel();
 
 async function runUpdate() {
   const records = [];
-  const invalidRecords = [];
-  let fileUploadTimestamp;
+  const jobReport = {
+    success: undefined,
+    recordsCount: undefined,
+    errorMessage: undefined,
+    fileUploadTime: undefined,
+    jobEndedTime: undefined,
+    invalidRecords: []
+  };
 
   try {
     logger.log('info', `Preparing table update for ${serviceName}`);
@@ -28,8 +35,8 @@ async function runUpdate() {
     logger.log('info', 'Getting data file location from RDS');
     const dataFileInfo = await db.getLatestUrl(client);
     if (dataFileInfo) {
-      const fileUploadTimestamp = dataFileInfo.created_at.toString();
-      logger.log('info', `Found file uploaded at: ${fileUploadTimestamp}`);
+      logger.log('info', `Found file uploaded at: ${dataFileInfo.created_at.toString()}`);
+      jobReport.fileUploadTime = new Date(dataFileInfo.created_at);
     }
 
     // Authenticate with Keycloak and receive token
@@ -41,20 +48,14 @@ async function runUpdate() {
     const response = await axios(fv.fileRequestConfig(dataFileInfo.url, fvToken));
     const axiosStream = response.data;
 
-    // Setup CSV parser
-    const parser = parse({ from: 2, trim: true, columns: targetColumns ?? true });
-
-    // Axios stream events
     axiosStream.on('error', error => {
       logger.log('error', `Axios stream error: ${error.message}`);
       throw error;
     });
 
-    axiosStream.on('end', () => {
-      parser.end();
-    });
+    // Setup CSV parser
+    const parser = parse({ from: 2, trim: true, columns: parseHeadings ?? true });
 
-    // Parser events
     parser.on('readable', async () => {
       axiosStream.pause();
       let record;
@@ -65,7 +66,7 @@ async function runUpdate() {
           if (report.valid) {
             records.push(record);
           } else {
-            invalidRecords.push(report);
+            jobReport.invalidRecords.push(report);
           }
         } else {
           records.push(record);
@@ -79,19 +80,6 @@ async function runUpdate() {
       throw error;
     });
 
-    parser.on('end', async () => {
-      if (records.length) {
-        logger.log('info', 'Starting record insertion to temp table');
-        await db.insertRecords(client, records);
-        logger.log('info', 'Replacing main lookup table from new inserts');
-        await db.replaceLookupTable(client);
-        const completeTime = new Date();
-        await emailer.sendCaseworkerSuccessNotification(records.length, invalidRecords, new Date(), completeTime);
-      }
-      logger.log('info', 'Job complete!');
-      console.log('INVALID RECORDS: ', invalidRecords);
-    });
-
     // Setup temporary lookup table to receive data
     logger.log('info', 'Preparing temporary lookup table');
     await db.dropTempLookupTable(client);
@@ -99,13 +87,30 @@ async function runUpdate() {
 
     // Start streaming data from Axios into CSV parser
     logger.log('info', 'Streaming CSV data from data file');
-    axiosStream.pipe(parser);
+    await pipeline(axiosStream, parser);
+    parser.end();
+
+    if (records.length) {
+      logger.log('info', 'Starting record insertion to temp table');
+      await db.insertRecords(client, records);
+      logger.log('info', 'Replacing main lookup table from new inserts');
+      await db.replaceLookupTable(client);
+      jobReport.jobEndedTime = new Date();
+      jobReport.success = true;
+      jobReport.recordsCount = records.length;
+      await emailer.sendCaseworkerNotification(jobReport);
+    }
+
+    logger.log('info', 'Job complete!');
+    console.log('INVALID RECORDS: ', jobReport.invalidRecords);
   } catch (error) {
     logger.log('error', error);
     logger.log('info', 'Dropping temporary lookup table');
     await db.dropTempLookupTable(client);
-    const failureTime = new Date();
-    await emailer.sendCaseworkerFailureNotification(error.message, invalidRecords, new Date(), failureTime);
+    jobReport.jobEndedTime = new Date();
+    jobReport.success = false;
+    jobReport.errorMessage = error.message;
+    await emailer.sendCaseworkerNotification(jobReport);
   }
 }
 

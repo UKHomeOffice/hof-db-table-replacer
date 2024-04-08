@@ -19,6 +19,8 @@ const emailer = new EmailModel();
 async function runUpdate() {
   const records = [];
   const invalidRecords = [];
+  let fileUploadTimestamp;
+
   try {
     logger.log('info', `Preparing table update for ${serviceName}`);
 

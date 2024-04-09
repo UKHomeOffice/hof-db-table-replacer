@@ -1,3 +1,4 @@
+/* eslint-disable consistent-return */
 const config = require('../config');
 const logger = require('../lib/logger')({ env: config.env });
 
@@ -25,22 +26,24 @@ module.exports = class NotifyModel {
       csv_uploaded_datetime: this.getDateAndTimeString(fileUploadTime),
       cepr_update_datetime: this.getDateAndTimeString(jobEndedTime),
       has_invalid_records: (invalidRecords.length ? 'yes' : 'no'),
-      link_to_file: '',
+      link_to_file: ''
     };
 
     let templateId;
     if (success) {
       emailProps.records_count = recordsCount;
-      templateId = successTemplateId
+      templateId = successTemplateId;
     } else {
       emailProps.failure_message = errorMessage;
-      templateId = failureTemplateId
+      templateId = failureTemplateId;
     }
 
     if (invalidRecords.length) {
       const invalidRecordsCsv = Buffer.from(this.writeInvalidRecordsToCsv(invalidRecords), 'utf8');
       const fileNameDate = fileUploadTime.toLocaleDateString().replace(/\//g, '-');
-      emailProps.link_to_file = notifyClient.prepareUpload(invalidRecordsCsv, { filename: `invalid-cepr-records-${fileNameDate}.csv` });
+      emailProps.link_to_file = notifyClient.prepareUpload(invalidRecordsCsv, {
+        filename: `invalid-cepr-records-${fileNameDate}.csv`
+      });
     }
 
     try {
@@ -61,13 +64,13 @@ module.exports = class NotifyModel {
     const dynamicHeaders = this.createCsvHeadersFromFirstRecord(invalidRecords[0]);
     let csvString = `${dynamicHeaders}\r\n`;
 
-    for (let i=0; i < invalidRecords.length; i++) {
+    for (let i = 0; i < invalidRecords.length; i++) {
       const { reasons } = invalidRecords[i];
       const stringSizeBytes = Buffer.byteLength(csvString, 'utf8');
 
       if (stringSizeBytes >= 1999900) {
         logger.log('info', 'Invalid records may exceed max Notify attachment size of 2MB');
-        return csvString;
+        break;
       } else {
         csvString += `${Object.values(invalidRecords[i].record).join(',')},${reasons.join('; ')}\r\n`;
       }
@@ -78,7 +81,6 @@ module.exports = class NotifyModel {
   getDateAndTimeString(date) {
     return date instanceof Date && !isNaN(date) ?
       `${date.toLocaleDateString()} at ${date.toLocaleTimeString()}` :
-      'unknown date at unknown time'
+      'unknown date at unknown time';
   }
 };
-

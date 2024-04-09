@@ -14,7 +14,7 @@ const client = require(`./db/${config.db.client}`);
 const Model = require(`./db/models/${config.db.model}`);
 const db = new Model();
 
-const EmailModel = require(`./notifications/${config.notifications.emailModel}`)
+const EmailModel = require(`./notifications/${config.notifications.emailModel}`);
 const emailer = new EmailModel();
 
 async function runUpdate() {

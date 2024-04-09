@@ -9,10 +9,10 @@ const {
   successTemplateId,
   failureTemplateId
 } = config.notifications;
-const notifyClient = new NotifyClient(notifyKey);
+const emailClient = new NotifyClient(notifyKey);
 
-module.exports = class NotifyModel {
-  async sendCaseworkerNotification(jobReport) {
+class EmailModel {
+  async sendCaseworkerNotification(client, jobReport) {
     const {
       success,
       recordsCount,
@@ -41,16 +41,17 @@ module.exports = class NotifyModel {
     if (invalidRecords.length) {
       const invalidRecordsCsv = Buffer.from(this.writeInvalidRecordsToCsv(invalidRecords), 'utf8');
       const fileNameDate = fileUploadTime.toLocaleDateString().replace(/\//g, '-');
-      emailProps.link_to_file = notifyClient.prepareUpload(invalidRecordsCsv, {
+      emailProps.link_to_file = client.prepareUpload(invalidRecordsCsv, {
         filename: `invalid-cepr-records-${fileNameDate}.csv`
       });
     }
 
     try {
-      return await notifyClient.sendEmail(templateId, caseworkerEmail, {
+      return await client.sendEmail(templateId, caseworkerEmail, {
         personalisation: emailProps
       });
     } catch (error) {
+      console.log(error)
       logger.log('error', error);
     }
   }
@@ -84,3 +85,5 @@ module.exports = class NotifyModel {
       'unknown date at unknown time';
   }
 };
+
+module.exports = { emailClient, EmailModel };

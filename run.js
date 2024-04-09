@@ -10,11 +10,12 @@ const { parse } = require('csv-parse');
 const logger = require('./lib/logger')({ env: config.env });
 const fv = require('./lib/file-vault-utils');
 
-const client = require(`./db/${config.db.client}`);
-const Model = require(`./db/models/${config.db.model}`);
-const db = new Model();
+const dbClient = require(`./db/${config.db.client}`);
+const DBModel = require(`./db/models/${config.db.model}`);
+const db = new DBModel();
 
-const EmailModel = require(`./notifications/${config.notifications.emailModel}`);
+const emailClient = require(`./notifications/${config.notifications.emailModel}`).emailClient;
+const EmailModel = require(`./notifications/${config.notifications.emailModel}`).EmailModel;
 const emailer = new EmailModel();
 
 async function runUpdate() {
@@ -33,7 +34,7 @@ async function runUpdate() {
 
     // Get the most recent CSV data URL and upload timestamp from RDS
     logger.log('info', 'Getting data file location from RDS');
-    const dataFileInfo = await db.getLatestUrl(client);
+    const dataFileInfo = await db.getLatestUrl(dbClient);
     if (dataFileInfo) {
       logger.log('info', `Found file uploaded at: ${dataFileInfo.created_at.toString()}`);
       jobReport.fileUploadTime = new Date(dataFileInfo.created_at);
@@ -82,8 +83,8 @@ async function runUpdate() {
 
     // Setup temporary lookup table to receive data
     logger.log('info', 'Preparing temporary lookup table');
-    await db.dropTempLookupTable(client);
-    await db.createTempLookupTable(client);
+    await db.dropTempLookupTable(dbClient);
+    await db.createTempLookupTable(dbClient);
 
     // Start streaming data from Axios into CSV parser
     logger.log('info', 'Streaming CSV data from data file');
@@ -92,25 +93,24 @@ async function runUpdate() {
 
     if (records.length) {
       logger.log('info', 'Starting record insertion to temp table');
-      await db.insertRecords(client, records);
+      await db.insertRecords(dbClient, records);
       logger.log('info', 'Replacing main lookup table from new inserts');
-      await db.replaceLookupTable(client);
+      await db.replaceLookupTable(dbClient);
       jobReport.jobEndedTime = new Date();
       jobReport.success = true;
       jobReport.recordsCount = records.length;
-      await emailer.sendCaseworkerNotification(jobReport);
+      await emailer.sendCaseworkerNotification(emailClient, jobReport);
     }
 
     logger.log('info', 'Job complete!');
-    console.log('INVALID RECORDS: ', jobReport.invalidRecords);
   } catch (error) {
     logger.log('error', error);
     logger.log('info', 'Dropping temporary lookup table');
-    await db.dropTempLookupTable(client);
+    await db.dropTempLookupTable(dbClient);
     jobReport.jobEndedTime = new Date();
     jobReport.success = false;
     jobReport.errorMessage = error.message;
-    await emailer.sendCaseworkerNotification(jobReport);
+    await emailer.sendCaseworkerNotification(emailClient, jobReport);
   }
 }
 

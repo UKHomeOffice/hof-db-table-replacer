@@ -11,11 +11,11 @@ const logger = require('./lib/logger')({ env: config.env });
 const fv = require('./lib/file-vault-utils');
 
 const dbClient = require(`./db/${config.db.client}`);
-const DBModel = require(`./db/models/${config.db.model}`);
-const db = new DBModel();
+const DbModel = require(`./db/models/${config.db.model}`);
+const db = new DbModel();
 
-const emailClient = require(`./notifications/${config.notifications.emailModel}`).emailClient;
-const EmailModel = require(`./notifications/${config.notifications.emailModel}`).EmailModel;
+const emailClient = require(`./notifications/${config.notifications.client}`);
+const EmailModel = require(`./notifications/models/${config.notifications.model}`);
 const emailer = new EmailModel();
 
 async function runUpdate() {

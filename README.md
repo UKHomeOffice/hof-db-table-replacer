@@ -93,7 +93,11 @@ It is possible to use a data source that is not protected by Keycloak as long as
 
 ### Notifications
 
-A notifications model is imported in `run.js`. The model used is specified by an environment variable `NOTIFICATIONS_MODEL`. This variable is required. At present the model available for use is `govuk-notify-model` which uses the [notifications-node-client](https://docs.notifications.service.gov.uk/node.html) module.
+Similar to the Database selection, The Notifications service used can be configured to client and model.
+
+A notifications client and model is imported in `run.js`. The model used is specified by environment variables `NOTIFICATIONS_CLIENT` and `NOTIFICATIONS_MODEL`. This variable is required. The `govuk-notify` client and `govuk-notify-model` model use the [notifications-node-client](https://docs.notifications.service.gov.uk/node.html) module.
+
+If adding a new notifications client or model use the existing methods and implementation as a guide.
 
 ## Build and run
 
@@ -120,6 +124,7 @@ KEYCLOAK_USERNAME
 KEYCLOAK_PASSWORD
 KEYCLOAK_TOKEN_URL
 CASEWORKER_EMAIL # Email address to send pass/fail notifications to
+NOTIFICATIONS_CLIENT # e.g. govuk-notify. No default is given
 NOTIFICATIONS_MODEL # e.g. govuk-notify-model. No default is given
 NOTIFY_KEY # API key for a GovUK Notify service
 NOTIFY_TEMPLATE_SUCCESS # Template reference ID for GovUK Notify template for success case

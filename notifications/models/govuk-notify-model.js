@@ -1,17 +1,13 @@
 /* eslint-disable consistent-return */
-const config = require('../config');
-const logger = require('../lib/logger')({ env: config.env });
-
-const NotifyClient = require('notifications-node-client').NotifyClient;
+const config = require('../../config');
+const logger = require('../../lib/logger')({ env: config.env });
 const {
-  notifyKey,
   caseworkerEmail,
   successTemplateId,
   failureTemplateId
 } = config.notifications;
-const emailClient = new NotifyClient(notifyKey);
 
-class EmailModel {
+module.exports = class NotifyModel {
   async sendCaseworkerNotification(client, jobReport) {
     const {
       success,
@@ -28,7 +24,6 @@ class EmailModel {
       has_invalid_records: (invalidRecords.length ? 'yes' : 'no'),
       link_to_file: ''
     };
-
     let templateId;
     if (success) {
       emailProps.records_count = recordsCount;
@@ -51,7 +46,6 @@ class EmailModel {
         personalisation: emailProps
       });
     } catch (error) {
-      console.log(error)
       logger.log('error', error);
     }
   }
@@ -85,5 +79,3 @@ class EmailModel {
       'unknown date at unknown time';
   }
 };
-
-module.exports = { emailClient, EmailModel };

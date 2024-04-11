@@ -1,33 +1,18 @@
-const { EmailModel } = require('../../notifications/govuk-notify-model');
+const EmailModel = require('../../notifications/models/govuk-notify-model');
 const emailer = new EmailModel();
 
 jest.mock('../../config.js', () => {
   const originalModule = jest.requireActual('../../config.js');
   return {
     ...originalModule,
-    notifications: { notifyKey: 'test' }
+    notifications: {
+      notifyKey: 'test',
+      caseworkerEmail: 'sas-hof-test@digital.homeoffice.gov.uk',
+      successTemplateId: 's-u-c-c-e-s-s',
+      failureTemplateId: 'f-a-i-l-u-r-e'
+    },
   };
 });
-
-// jest.mock('notifications-node-client');
-
-// const config = require('../../config')
-// const NotifyClient = require('notifications-node-client')
-// const {
-//   notifyKey
-// } = config.notifications;
-// const notifyClient = new NotifyClient(notifyKey);
-
-// jest.mock('notifications-node-client', () => {
-//   const originalModule = jest.requireActual('notifications-node-client');
-//   return {
-//     ...originalModule,
-//     NotifyClient: {
-//       sendEmail: jest.fn().mockResolvedValue({ status: 201, data: {} }),
-//       prepareUpload: jest.fn().mockReturnValue({ data: { file: 'https://...' }})
-//     }
-//   };
-// });
 
 describe('The getDateAndTimeString method', () => {
   test('should return a correctly formatted string when given a date object', () => {
@@ -88,24 +73,152 @@ describe('The writeInvalidRecordsToCsv method', () => {
   })
 });
 
-describe('The sendCaseworkerNotification method', () => {
+describe('The sendCaseworkerNotification method succeeding...', () => {
   let emailClient;
   beforeAll(() => {
     emailClient = {
-      sendEmail: jest.fn().mockResolvedValue({ status: 201, data: {} })
+      sendEmail: jest.fn().mockResolvedValue({ status: 201, data: {} }),
+      prepareUpload: jest.fn().mockReturnValue({ file: 'aGVsbG8K' })
     };
   });
 
-  let testJobReport = {
-    success: true,
-    recordsCount: 10,
-    errorMessage: undefined,
-    fileUploadTime: new Date(),
-    jobEndedTime: new Date(),
-    invalidRecords: []
-  }
-  test('', async () => {
+  test('The Notify sendEmail method is called with the correct object for a success email', async () => {
+    let testJobReport = {
+      success: true,
+      recordsCount: 10,
+      errorMessage: undefined,
+      fileUploadTime: new Date("1987-08-14"),
+      jobEndedTime: new Date("1987-08-14"),
+      invalidRecords: []
+    }
+
+    let expectedEmailProps = {
+      csv_uploaded_datetime: '14/08/1987 at 01:00:00',
+      cepr_update_datetime: '14/08/1987 at 01:00:00',
+      has_invalid_records: 'no',
+      link_to_file: '',
+      records_count: 10
+    }
     await emailer.sendCaseworkerNotification(emailClient, testJobReport)
     expect(emailClient.sendEmail).toHaveBeenCalled();
+    expect(emailClient.sendEmail).toHaveBeenCalledWith(
+      's-u-c-c-e-s-s',
+      'sas-hof-test@digital.homeoffice.gov.uk',
+      { personalisation: expectedEmailProps }
+    );
+  });
+
+  test('sendEmail is called with the correct object for a success email with invalids', async () => {
+    let testJobReport = {
+      success: true,
+      recordsCount: 9,
+      errorMessage: undefined,
+      fileUploadTime: new Date("1987-08-14"),
+      jobEndedTime: new Date("1987-08-14"),
+      invalidRecords: [
+        {
+        record: { id: 'a1', dtr: 'Yeah'},
+        valid: false,
+        reasons: ['id', 'dtr']
+        }
+      ]
+    }
+
+    let expectedEmailProps = {
+      csv_uploaded_datetime: '14/08/1987 at 01:00:00',
+      cepr_update_datetime: '14/08/1987 at 01:00:00',
+      has_invalid_records: 'yes',
+      link_to_file: { file: 'aGVsbG8K' },
+      records_count: 9
+    }
+    await emailer.sendCaseworkerNotification(emailClient, testJobReport)
+    expect(emailClient.sendEmail).toHaveBeenCalled();
+    expect(emailClient.sendEmail).toHaveBeenCalledWith(
+      's-u-c-c-e-s-s',
+      'sas-hof-test@digital.homeoffice.gov.uk',
+      { personalisation: expectedEmailProps }
+    );
+  });
+
+  test('sendEmail is called with the correct object for a failure email', async () => {
+    let testJobReport = {
+      success: false,
+      recordsCount: undefined,
+      errorMessage: 'Error',
+      fileUploadTime: new Date("1987-08-14"),
+      jobEndedTime: new Date("1987-08-14"),
+      invalidRecords: [],
+    }
+
+    let expectedEmailProps = {
+      csv_uploaded_datetime: '14/08/1987 at 01:00:00',
+      cepr_update_datetime: '14/08/1987 at 01:00:00',
+      has_invalid_records: 'no',
+      link_to_file: '',
+      failure_message: 'Error'
+    }
+    await emailer.sendCaseworkerNotification(emailClient, testJobReport)
+    expect(emailClient.sendEmail).toHaveBeenCalled();
+    expect(emailClient.sendEmail).toHaveBeenCalledWith(
+      'f-a-i-l-u-r-e',
+      'sas-hof-test@digital.homeoffice.gov.uk',
+      { personalisation: expectedEmailProps }
+    );
+  });
+
+  test('sendEmail is called with the correct object for a failure email with invalids', async () => {
+    let testJobReport = {
+      success: false,
+      errorMessage: 'Error',
+      fileUploadTime: new Date("1987-08-14"),
+      jobEndedTime: new Date("1987-08-14"),
+      invalidRecords: [
+        {
+        record: { id: 'a1', dtr: 'Yeah'},
+        valid: false,
+        reasons: ['id', 'dtr']
+        }
+      ]
+    }
+
+    let expectedEmailProps = {
+      csv_uploaded_datetime: '14/08/1987 at 01:00:00',
+      cepr_update_datetime: '14/08/1987 at 01:00:00',
+      has_invalid_records: 'yes',
+      link_to_file: { file: 'aGVsbG8K' },
+      failure_message: 'Error'
+    }
+    await emailer.sendCaseworkerNotification(emailClient, testJobReport)
+    expect(emailClient.sendEmail).toHaveBeenCalled();
+    expect(emailClient.sendEmail).toHaveBeenCalledWith(
+      'f-a-i-l-u-r-e',
+      'sas-hof-test@digital.homeoffice.gov.uk',
+      { personalisation: expectedEmailProps }
+    );
+  });
+
+  describe('The sendCaseworkerNotification method failing...', () => {
+    let emailClient;
+    beforeAll(() => {
+      emailClient = {
+        sendEmail: jest.fn().mockRejectedValue(new Error('Notify error')),
+        prepareUpload: jest.fn().mockReturnValue({ file: 'aGVsbG8K' })
+      };
+    });
+
+    test('A failing sendEmail throws an error', async () => {
+      let testJobReport = {
+        success: true,
+        recordsCount: 10,
+        errorMessage: undefined,
+        fileUploadTime: new Date("1987-08-14"),
+        jobEndedTime: new Date("1987-08-14"),
+        invalidRecords: []
+      }
+
+      return emailer.sendCaseworkerNotification(emailClient, testJobReport).catch(error => {
+        expect(error.message).toEqual('Notify error');
+      });
+    });
   });
 });

@@ -35,7 +35,7 @@ module.exports = class NotifyModel {
 
     if (invalidRecords.length) {
       const invalidRecordsCsv = Buffer.from(this.writeInvalidRecordsToCsv(invalidRecords), 'utf8');
-      const fileNameDate = fileUploadTime.toLocaleDateString().replace(/\//g, '-');
+      const fileNameDate = this.getDateAndTimeString(fileUploadTime).replace(/[\/\s:]/g, '-');
       emailProps.link_to_file = client.prepareUpload(invalidRecordsCsv, {
         filename: `invalid-cepr-records-${fileNameDate}.csv`
       });

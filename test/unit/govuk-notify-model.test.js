@@ -75,26 +75,30 @@ describe('The writeInvalidRecordsToCsv method', () => {
 
 describe('The sendCaseworkerNotification method succeeding...', () => {
   let emailClient;
-  beforeAll(() => {
+  beforeEach(() => {
     emailClient = {
       sendEmail: jest.fn().mockResolvedValue({ status: 201, data: {} }),
       prepareUpload: jest.fn().mockReturnValue({ file: 'aGVsbG8K' })
     };
   });
 
+  afterEach(() => {
+    jest.clearAllMocks();
+  })
+
   test('The Notify sendEmail method is called with the correct object for a success email', async () => {
     const testJobReport = {
       success: true,
       recordsCount: 10,
       errorMessage: undefined,
-      fileUploadTime: new Date('1987-08-14'),
-      jobEndedTime: new Date('1987-08-14'),
+      fileUploadTime: 'example date',
+      jobEndedTime: 'example date',
       invalidRecords: []
     };
 
     const expectedEmailProps = {
-      csv_uploaded_datetime: '14/08/1987 at 01:00:00',
-      cepr_update_datetime: '14/08/1987 at 01:00:00',
+      csv_uploaded_datetime: 'unknown date at unknown time',
+      cepr_update_datetime: 'unknown date at unknown time',
       has_invalid_records: 'no',
       link_to_file: '',
       records_count: 10
@@ -114,8 +118,8 @@ describe('The sendCaseworkerNotification method succeeding...', () => {
       success: true,
       recordsCount: 9,
       errorMessage: undefined,
-      fileUploadTime: new Date('1987-08-14'),
-      jobEndedTime: new Date('1987-08-14'),
+      fileUploadTime: 'example date',
+      jobEndedTime: 'example date',
       invalidRecords: [
         {
           record: { id: 'a1', dtr: 'Yeah'},
@@ -126,8 +130,8 @@ describe('The sendCaseworkerNotification method succeeding...', () => {
     };
 
     const expectedEmailProps = {
-      csv_uploaded_datetime: '14/08/1987 at 01:00:00',
-      cepr_update_datetime: '14/08/1987 at 01:00:00',
+      csv_uploaded_datetime: 'unknown date at unknown time',
+      cepr_update_datetime: 'unknown date at unknown time',
       has_invalid_records: 'yes',
       link_to_file: { file: 'aGVsbG8K' },
       records_count: 9
@@ -147,14 +151,14 @@ describe('The sendCaseworkerNotification method succeeding...', () => {
       success: false,
       recordsCount: undefined,
       errorMessage: 'Error',
-      fileUploadTime: new Date('1987-08-14'),
-      jobEndedTime: new Date('1987-08-14'),
+      fileUploadTime: 'example date',
+      jobEndedTime: 'example date',
       invalidRecords: []
     };
 
     const expectedEmailProps = {
-      csv_uploaded_datetime: '14/08/1987 at 01:00:00',
-      cepr_update_datetime: '14/08/1987 at 01:00:00',
+      csv_uploaded_datetime: 'unknown date at unknown time',
+      cepr_update_datetime: 'unknown date at unknown time',
       has_invalid_records: 'no',
       link_to_file: '',
       failure_message: 'Error'
@@ -173,8 +177,8 @@ describe('The sendCaseworkerNotification method succeeding...', () => {
     const testJobReport = {
       success: false,
       errorMessage: 'Error',
-      fileUploadTime: new Date('1987-08-14'),
-      jobEndedTime: new Date('1987-08-14'),
+      fileUploadTime: 'example date',
+      jobEndedTime: 'example date',
       invalidRecords: [
         {
           record: { id: 'a1', dtr: 'Yeah'},
@@ -185,8 +189,8 @@ describe('The sendCaseworkerNotification method succeeding...', () => {
     };
 
     const expectedEmailProps = {
-      csv_uploaded_datetime: '14/08/1987 at 01:00:00',
-      cepr_update_datetime: '14/08/1987 at 01:00:00',
+      csv_uploaded_datetime: 'unknown date at unknown time',
+      cepr_update_datetime: 'unknown date at unknown time',
       has_invalid_records: 'yes',
       link_to_file: { file: 'aGVsbG8K' },
       failure_message: 'Error'
@@ -216,8 +220,8 @@ describe('The sendCaseworkerNotification method failing...', () => {
       success: true,
       recordsCount: 10,
       errorMessage: undefined,
-      fileUploadTime: new Date('1987-08-14'),
-      jobEndedTime: new Date('1987-08-14'),
+      fileUploadTime: 'example date',
+      jobEndedTime: 'example date',
       invalidRecords: []
     };
 

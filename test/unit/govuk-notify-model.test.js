@@ -84,7 +84,7 @@ describe('The sendCaseworkerNotification method succeeding...', () => {
 
   afterEach(() => {
     jest.clearAllMocks();
-  })
+  });
 
   test('The Notify sendEmail method is called with the correct object for a success email', async () => {
     const testJobReport = {

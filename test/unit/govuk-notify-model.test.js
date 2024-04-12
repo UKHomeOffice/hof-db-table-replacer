@@ -18,7 +18,7 @@ describe('The getDateAndTimeString method', () => {
   test('should return a correctly formatted string when given a date object', () => {
     const dateAndTimeString = emailer.getDateAndTimeString(new Date());
     expect(typeof dateAndTimeString).toBe('string');
-    expect(/\d{2}\/\d{2}\/\d{4}\ at\ \d{2}\:\d{2}\:\d{2}/.test(dateAndTimeString)).toBe(true);
+    expect(/[\d{2}\/\d{2}\/\d{4}\sat\s\d{2}\:\d{2}\:\d{2}]/.test(dateAndTimeString)).toBe(true);
   });
 
   test('should return a specific string if it does not receive a date object', () => {

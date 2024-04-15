@@ -23,6 +23,8 @@ This script only makes certain assumptions about the service it will update the 
 
 This repository currently offers either [pg-promise](https://vitaly-t.github.io/pg-promise/index.html) or [knex.js](https://knexjs.org/) to handle db connection and query building. You can configure the client and model used using environment variables.
 
+To optimise potentially large inserts both models make use of their respective client's batch insert functionality inside SQL transactions. This approach aims to reduce the overheads of making many inserts by queuing them into smaller batches and running sequentially. Please see the batch insert docs for [pg-promise](https://github.com/vitaly-t/pg-promise/wiki/Data-Imports) and [Knex](https://knexjs.org/guide/utility.html#batchinsert) for more information. It may be that in different environment situations one model works better than the other.
+
 Some [documentation of the high level design process for the lookup replacer](https://collaboration.homeoffice.gov.uk/display/DSASS/High+Level+Ellaboration+-+IMB-68) can be found in the HOF Confluence.
 
 ## Script steps
@@ -50,6 +52,8 @@ In the /db folder, files will provide an exported connection to a database clien
 
 The /db/models folder contains models for available clients providing exported classes with query methods for the given clients.
 
+The optional `DB_INSERT_BATCH_SIZE` environment variable takes a number which when assigned is the number of records to insert into the database from the entire records array in a single batch. The default is 2000. Tweaking this number may increase performance depending on the size and number of individual records and available resources for Node and SQL servers.
+
 ### Service
 
 The /services folder contains service specific configuration. Setting the `SERVICE_NAME` environment variable correctly for your intended service should allow the app to run with that service's specific configurations.
@@ -58,15 +62,18 @@ If creating a new service you can add a new folder within /services named as the
 
 ```javascript
 module.exports = {
-  targetColumns: ['array', 'of', 'strings'],
-  validateRecord: function (record) {return { valid: true }}
+  targetColumns: ['array', 'of', 'strings'], // REQUIRED
+  parseHeadings: ['array', 'of', 'strings'], // OPTIONAL
+  validateRecord: function (record) {return { valid: true }} // OPTIONAL
 };
 
 ```
 
-Both options in this exported config object are optional.
+`targetColumns` is a required property of this export for each service as it defines an array of database column names the script will target to add CSV data to. If using `parseHeadings` then the target column names should be the same as the equivalent parsed object key names. If not using `parseHeadings` the target column names should be the same as the CSV column header names.
 
-When the csv-parse module parses CSV it creates an object for each record of key/value pairs where the key is the column name and the value is the entry in that column in the CSV row. The object has a key/value pair for each column. `targetColumns` can optionally be defined as an array if you want to replace the CSV column names with something else in the parsed object - for example if the CSV column name is in a longform string format that is inconvenient to work with. This array must have a length the same as the number of columns in the CSV and an item to replace each column name from left to right. If this property is not exported the parsed object will use the CSV column names by default.
+`parseHeadings` is an optional property of this export for each service. During parsing the items in `parseHeadings` will replace the CSV column headings as keys for each record object. The order of items in `parseHeadings` should be the same as the order that headings appear in the CSV. That way during parsing the data is assigned to the correct property. If used, the length of `parseHeadings` should be the same as the number of column headings with a replacement for each heading. These can be the same as the original headings if desired.
+
+If there are columns in the CSV that do not need to be inserted to the database, include the column in `parseHeadings` (if used), this will ensure that CSV data is parsed into the correct object properties. Whether using `parseHeadings` or not you can remove additional properties from parsed records before insertion in a `validateRecord` function. Ensure that `targetColumns` only includes database columns you want to insert, and that record objects have a key/value for each of those columns.
 
 If the `validateRecord` property is defined as a function with one `record` argument the script will use that function to validate records row by row. The function must return at least an object with a bool type `valid` property. e.g. `{ valid: true }`. Records returning `{ valid: true }` from this function are added to the `records` array, those that return `{ valid: false }` are added to the `invalidRecords` array. Check existing implementation for examples.
 
@@ -95,8 +102,8 @@ The purpose of this service is to be run as a scheduled job from the main servic
 ```bash
 NODE_ENV # Set to 'local' for local development and testing
 SERVICE_NAME # Shortname for the service to configure validations e.g. ima
-TARGET_TABLE # The name of the table in the service RDS where the URLs for uploaded CSV data are stored e.g. csv_urls
-SOURCE_FILE_TABLE # The name of the target table to replace with the newer CSV data. e.g. cepr_lookup
+DB_REPLACER_TARGET_TABLE # The name of the table in the service RDS where the URLs for uploaded CSV data are stored e.g. csv_urls
+DB_REPLACER_SOURCE_FILE_TABLE # The name of the target table to replace with the newer CSV data. e.g. cepr_lookup
 KEYCLOAK_SECRET # Keycloak secrets to authenticate for retrieval from S3 via file-vault (assuming this is the CSV's persistent location)
 KEYCLOAK_CLIENT_ID
 KEYCLOAK_USERNAME
@@ -106,6 +113,7 @@ CASEWORKER_EMAIL # Email address to send pass/fail notifications to
 NOTIFY_KEY # API key for a GovUK Notify service
 NOTIFY_TEMPLATE_PASS # Template reference ID for GovUK Notify template for success case
 NOTIFY_TEMPLATE_FAIL # Template reference ID for GovUK Notify template for failure case
+DB_INSERT_BATCH_SIZE # Defaults to 2000. OPTIONAL: tweak for the max size of a single DB insert batch
 DB_CLIENT # Choose a DB client to use to interact with the database e.g. 'pgp' or 'knex'. Options are in the /db folder
 DB_MODEL # Choose a DB model appropriate to the client you selected. Options are in the /db/models folder
 ```

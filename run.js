@@ -92,7 +92,7 @@ async function runUpdate() {
     parser.end();
 
     if (jobReport.invalidRecords.length) {
-      logger.log('warn', `WARNING: ${jobReport.invalidRecords.length} invalid records found`);
+      logger.log('warn', `WARNING: ${jobReport.invalidRecords.length} invalid record(s) found`);
     }
 
     if (records.length) {

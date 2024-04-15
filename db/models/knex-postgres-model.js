@@ -26,8 +26,8 @@ module.exports = class KnexPostgresModel {
         .timeout(this.requestTimeout);
       return result[0];
     } catch (error) {
-      logger.log('error', 'Error retrieving CSV URL');
-      throw new Error('Error retrieving CSV URL', { cause: error });
+      logger.log('error', 'Error retrieving data URL');
+      throw new Error('Error retrieving data URL', { cause: error });
     }
   }
 

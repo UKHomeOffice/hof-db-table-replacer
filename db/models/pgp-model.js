@@ -24,8 +24,8 @@ module.exports = class PgpModel {
           resolve(data);
         })
         .catch(error => {
-          logger.log('error', 'Error retrieving CSV URL');
-          reject(new Error('Error retrieving CSV URL', { cause: error }));
+          logger.log('error', 'Error retrieving data URL');
+          reject(new Error('Error retrieving data URL', { cause: error }));
         });
     });
   }

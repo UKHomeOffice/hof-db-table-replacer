@@ -37,7 +37,7 @@ module.exports = class NotifyModel {
       const invalidRecordsCsv = Buffer.from(this.writeInvalidRecordsToCsv(invalidRecords), 'utf8');
       const fileNameDate = this.getDateAndTimeString(fileUploadTime).replace(/[\/\s:]/g, '-');
       emailProps.link_to_file = client.prepareUpload(invalidRecordsCsv, {
-        filename: `invalid-cepr-records-${fileNameDate}.csv`
+        filename: `invalid-cepr-records-uploaded-${fileNameDate}.csv`
       });
     }
 
@@ -64,7 +64,7 @@ module.exports = class NotifyModel {
       const stringSizeBytes = Buffer.byteLength(csvString, 'utf8');
 
       if (stringSizeBytes >= 1999900) {
-        logger.log('warn', 'Invalid records may exceed max Notify attachment size of 2MB');
+        logger.log('warn', 'WARNING: invalid records may exceed max Notify attachment size of 2MB');
         break;
       } else {
         csvString += `${Object.values(invalidRecords[i].record).join(',')},${reasons.join('; ')}\r\n`;

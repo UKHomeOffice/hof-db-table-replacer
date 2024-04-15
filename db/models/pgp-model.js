@@ -13,7 +13,7 @@ module.exports = class PgpModel {
     this.sourceFileTable = sourceFileTable;
     this.targetColumns = targetColumns;
 
-    this.notifyModel = () => console.log('Using pg-promise...');
+    this.notifyModel = () => logger.log('info', 'Using pg-promise...');
     this.notifyModel();
   }
 

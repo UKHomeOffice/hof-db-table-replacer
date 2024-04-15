@@ -13,7 +13,7 @@ module.exports = class KnexPostgresModel {
     this.sourceFileTable = sourceFileTable;
     this.targetColumns = targetColumns;
 
-    this.notifyModel = () => console.log('Using Knex...');
+    this.notifyModel = () => logger.log('info', 'Using Knex...');
     this.notifyModel();
   }
 

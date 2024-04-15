@@ -113,7 +113,7 @@ CASEWORKER_EMAIL # Email address to send pass/fail notifications to
 NOTIFY_KEY # API key for a GovUK Notify service
 NOTIFY_TEMPLATE_PASS # Template reference ID for GovUK Notify template for success case
 NOTIFY_TEMPLATE_FAIL # Template reference ID for GovUK Notify template for failure case
-DB_INSERT_BATCH_SIZE # Defaults to 1000. OPTIONAL: tweak for the max size of a single DB insert batch
+DB_INSERT_BATCH_SIZE # Defaults to 2000. OPTIONAL: tweak for the max size of a single DB insert batch
 DB_CLIENT # Choose a DB client to use to interact with the database e.g. 'pgp' or 'knex'. Options are in the /db folder
 DB_MODEL # Choose a DB model appropriate to the client you selected. Options are in the /db/models folder
 ```

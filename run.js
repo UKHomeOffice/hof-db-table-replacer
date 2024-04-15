@@ -82,7 +82,9 @@ async function runUpdate() {
         await db.replaceLookupTable(client);
       }
       logger.log('info', 'Job complete!');
-      console.log('INVALID RECORDS: ', invalidRecords);
+      if (invalidRecords.length) {
+        logger.log('warn', `WARNING: ${invalidRecords.length} invalid records found`, invalidRecords);
+      }
     });
 
     // Setup temporary lookup table to receive data

@@ -19,7 +19,7 @@ describe('The database model method getLatestUrl()', () => {
     };
   });
 
-  test('should return an onject with correct properties', async () => {
+  test('should return an object with correct properties', async () => {
     return db.getLatestUrl(client).then(data => {
       expect(data).toHaveProperty('url', 'https://...');
       expect(data).toHaveProperty('created_at', '1987-08-14T02:17:00.000Z');

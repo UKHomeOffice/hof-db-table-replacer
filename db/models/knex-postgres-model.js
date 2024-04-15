@@ -13,7 +13,7 @@ module.exports = class KnexPostgresModel {
     this.sourceFileTable = sourceFileTable;
     this.targetColumns = targetColumns;
 
-    this.notifyModel = () => console.log('Using Knex...');
+    this.notifyModel = () => logger.log('info', 'Using Knex...');
     this.notifyModel();
   }
 
@@ -71,6 +71,49 @@ module.exports = class KnexPostgresModel {
     } catch (error) {
       logger.log('error', 'Error during table replacement');
       throw new Error('Error during table replacement', { cause: error });
+    }
+  }
+
+  async dropTempLookupTable(knex) {
+    try {
+      await knex.schema.dropTableIfExists(`${this.targetTable}_tmp`);
+    } catch (error) {
+      logger.log('error', 'Error dropping temporary lookup table');
+      throw error;
+    }
+  }
+
+  async createTempLookupTable(knex) {
+    try {
+      await knex.schema.createTableLike(`${this.targetTable}_tmp`, this.targetTable);
+    } catch (error) {
+      logger.log('error', 'Error setting up temporary lookup table');
+      throw error;
+    }
+  }
+
+  async insertRecords(knex, records) {
+    try {
+      const start = new Date();
+      await knex.batchInsert(`${this.targetTable}_tmp`, records, insertBatchSize);
+      const complete = new Date();
+      const timeDiff = (complete.getTime() - start.getTime());
+      logger.log('info', `Total batches: ${Math.ceil(records.length / insertBatchSize)}, Duration: ${timeDiff}`);
+    } catch (error) {
+      logger.log('error', 'Error during records insert');
+      throw error;
+    }
+  }
+
+  async replaceLookupTable(knex) {
+    try {
+      await knex.transaction(async trx => {
+        await trx.schema.dropTableIfExists(this.targetTable);
+        await trx.schema.renameTable(`${this.targetTable}_tmp`, this.targetTable);
+      });
+    } catch (error) {
+      logger.log('error', 'Error during table replacement');
+      throw error;
     }
   }
 };

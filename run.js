@@ -91,6 +91,10 @@ async function runUpdate() {
     await pipeline(axiosStream, parser);
     parser.end();
 
+    if (jobReport.invalidRecords.length) {
+      logger.log('warn', `WARNING: ${jobReport.invalidRecords.length} invalid records found`);
+    }
+
     if (records.length) {
       logger.log('info', 'Starting record insertion to temp table');
       await db.insertRecords(dbClient, records);
@@ -99,6 +103,7 @@ async function runUpdate() {
       jobReport.jobEndedTime = new Date();
       jobReport.success = true;
       jobReport.recordsCount = records.length;
+      logger.log('info', 'Sending success notification');
       await emailer.sendCaseworkerNotification(emailClient, jobReport);
     }
 
@@ -110,6 +115,7 @@ async function runUpdate() {
     jobReport.jobEndedTime = new Date();
     jobReport.success = false;
     jobReport.errorMessage = error.message;
+    logger.log('info', 'Sending failure notification');
     await emailer.sendCaseworkerNotification(emailClient, jobReport);
   }
 }

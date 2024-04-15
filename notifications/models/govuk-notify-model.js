@@ -46,7 +46,7 @@ module.exports = class NotifyModel {
         personalisation: emailProps
       });
     } catch (error) {
-      logger.log('error', error);
+      logger.log('error', 'Error sending notifications:', error);
     }
   }
 
@@ -64,7 +64,7 @@ module.exports = class NotifyModel {
       const stringSizeBytes = Buffer.byteLength(csvString, 'utf8');
 
       if (stringSizeBytes >= 1999900) {
-        logger.log('info', 'Invalid records may exceed max Notify attachment size of 2MB');
+        logger.log('warn', 'Invalid records may exceed max Notify attachment size of 2MB');
         break;
       } else {
         csvString += `${Object.values(invalidRecords[i].record).join(',')},${reasons.join('; ')}\r\n`;

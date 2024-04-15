@@ -51,7 +51,7 @@ async function runUpdate() {
 
     axiosStream.on('error', error => {
       logger.log('error', `Axios stream error: ${error.message}`);
-      throw error;
+      throw new Error('Error in Axios stream', { cause: error });
     });
 
     // Setup CSV parser
@@ -78,7 +78,7 @@ async function runUpdate() {
 
     parser.on('error', error => {
       logger.log('error', `CSV processing error: ${error.message}`);
-      throw error;
+      throw new Error('CSV processing error', { cause: error });
     });
 
     // Setup temporary lookup table to receive data
@@ -104,7 +104,7 @@ async function runUpdate() {
 
     logger.log('info', 'Job complete!');
   } catch (error) {
-    logger.log('error', error);
+    logger.log('error', 'caught:', error.cause ?? error);
     logger.log('info', 'Dropping temporary lookup table');
     await db.dropTempLookupTable(dbClient);
     jobReport.jobEndedTime = new Date();

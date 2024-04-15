@@ -25,7 +25,7 @@ module.exports = class PgpModel {
         })
         .catch(error => {
           logger.log('error', 'Error retrieving CSV URL');
-          reject(error);
+          reject(new Error('Error retrieving CSV URL', { cause: error }));
         });
     });
   }
@@ -38,20 +38,20 @@ module.exports = class PgpModel {
         })
         .catch(error => {
           logger.log('error', 'Error dropping temporary lookup table');
-          reject(error);
+          reject(new Error('Error dropping temporary lookup table', { cause: error }));
         });
     });
   }
 
   async createTempLookupTable(pgp) {
     return new Promise((resolve, reject) => {
-      pgp.result('create table $1~ (LIKE $2~)', [`${this.targetTable}_tmp`, this.targetTable])
+      pgp.result('create table $1~ (LIKE $2~ including all)', [`${this.targetTable}_tmp`, this.targetTable])
         .then(data => {
           resolve(data);
         })
         .catch(error => {
           logger.log('error', 'Error setting up temporary lookup table');
-          reject(error);
+          reject(new Error('Error setting up temporary lookup table', { cause: error }));
         });
     });
   }
@@ -86,7 +86,7 @@ module.exports = class PgpModel {
         })
         .catch(error => {
           logger.log('error', 'Error during records insert');
-          reject(error);
+          reject(new Error('Error during records insert', { cause: error }));
         });
     });
   }
@@ -104,7 +104,7 @@ module.exports = class PgpModel {
         })
         .catch(error => {
           logger.log('error', 'Error during table replacement');
-          reject(error);
+          reject(new Error('Error during table replacement', { cause: error }));
         });
     });
   }

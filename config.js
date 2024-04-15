@@ -30,7 +30,7 @@ module.exports = {
     model: process.env.NOTIFICATIONS_MODEL,
     notifyKey: process.env.NOTIFY_KEY,
     caseworkerEmail: process.env.CASEWORKER_EMAIL,
-    successTemplateId: process.env.NOTIFY_TEMPLATE_SUCCESS,
-    failureTemplateId: process.env.NOTIFY_TEMPLATE_FAILURE
+    successTemplateId: process.env.DB_REPLACER_SUCCESS_TEMPLATE,
+    failureTemplateId: process.env.DB_REPLACER_FAILURE_TEMPLATE
   }
 };

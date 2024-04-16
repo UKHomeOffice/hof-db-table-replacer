@@ -108,17 +108,4 @@ module.exports = class PgpModel {
         });
     });
   }
-
-  async dropTempLookupTable(pgp) {
-    return new Promise((resolve, reject) => {
-      pgp.result('drop table if exists $1~', `${this.targetTable}_tmp`)
-        .then(data => {
-          resolve(data);
-        })
-        .catch(error => {
-          logger.log('error', 'Error dropping temporary lookup table');
-          reject(error);
-        });
-    });
-  }
 };

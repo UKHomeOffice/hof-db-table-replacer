@@ -46,14 +46,14 @@ describe('The database model method getLatestUrl()', () => {
         from: jest.fn(() => ({
           orderBy: jest.fn(() => ({
             limit: jest.fn(() => ({
-              timeout: jest.fn().mockRejectedValue(new Error('Url retrieval failed'))
+              timeout: jest.fn().mockRejectedValue(new Error('Error retrieving data URL'))
             }))
           }))
         }))
       }))
     };
     return db.getLatestUrl(client).catch(error => {
-      expect(error.message).toEqual('Url retrieval failed');
+      expect(error.message).toEqual('Error retrieving data URL');
     });
   });
 });

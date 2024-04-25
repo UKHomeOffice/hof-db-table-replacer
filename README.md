@@ -40,7 +40,7 @@ Some [documentation of the high level design process for the lookup replacer](ht
 
 ## Configuration
 
-The `config.js` file transforms environment variables into an exported object that can be referred to throughout the app.
+The root level `config.js` file transforms environment variables into an exported object that can be referred to throughout the app. Each service the script runs for also has its own `config.js` file (see [Service](#service)).
 
 ### Database
 
@@ -56,7 +56,7 @@ The optional `DB_INSERT_BATCH_SIZE` environment variable takes a number which wh
 
 ### Service
 
-The /services folder contains service specific configuration. Setting the `SERVICE_NAME` environment variable correctly for your intended service should allow the app to run with that service's specific configurations.
+The /services folder contains service specific configuration (/services/your-service/config.js). Setting the `SERVICE_NAME` environment variable correctly for your intended service should allow the app to run with that service's specific configurations.
 
 If creating a new service you can add a new folder within /services named as the shortname for your service (e.g. asc, ima, acq). Within that folder add a `config.js` as follows:
 
@@ -64,7 +64,11 @@ If creating a new service you can add a new folder within /services named as the
 module.exports = {
   targetColumns: ['array', 'of', 'strings'], // REQUIRED
   parseHeadings: ['array', 'of', 'strings'], // OPTIONAL
-  validateRecord: function (record) {return { valid: true }} // OPTIONAL
+  validateRecord: function (record) {return {
+    record: record,
+    valid: true,
+    reasons: ['array', 'of', 'strings']
+  }} // OPTIONAL
 };
 
 ```
@@ -75,7 +79,9 @@ module.exports = {
 
 If there are columns in the CSV that do not need to be inserted to the database, include the column in `parseHeadings` (if used), this will ensure that CSV data is parsed into the correct object properties. Whether using `parseHeadings` or not you can remove additional properties from parsed records before insertion in a `validateRecord` function. Ensure that `targetColumns` only includes database columns you want to insert, and that record objects have a key/value for each of those columns.
 
-If the `validateRecord` property is defined as a function with one `record` argument the script will use that function to validate records row by row. The function must return at least an object with a bool type `valid` property. e.g. `{ valid: true }`. Records returning `{ valid: true }` from this function are added to the `records` array, those that return `{ valid: false }` are added to the `invalidRecords` array. Check existing implementation for examples.
+If the `validateRecord` property is defined as a function with one `record` argument the script will use that function to validate records row by row. The function must return at least an object with at least the `valid` property. Records returning `{ valid: true }` from this function are added to the `records` array, those that return `{ valid: false }` are added to the `invalidRecords` array. Check [existing implementation](/services/ima/config.js) for examples.
+
+The other properties returned by the `validateRecord` function can be used by your notifications model to tailor emails. Check your chosen notifications model for required data.
 
 If no `validateRecord` propery is defined then the script will add all CSV rows to `records` without validation.
 
@@ -84,6 +90,14 @@ If no `validateRecord` propery is defined then the script will add all CSV rows 
 This script must authenticate with the service's Keycloak realm and receive a bearer token to allow authorised requests to the service's file-vault. Keycloak auth secrets are configured as environment variables.
 
 It is possible to use a data source that is not protected by Keycloak as long as it either a) supports the same auth protocols as Keycloak in which case environment variables can be substituted like for like, or b) if your data source does not require auth at all. In this case if no Keycloak token URL is provided to the environment the script will not attempt to auth and will pass `undefined` into the Axios data request config - meaning no auth headers are added to the outgoing request to the data URL.
+
+### Notifications
+
+Similar to the database selection, the notifications service used can be configured to client and model.
+
+A notifications client and model is imported in `run.js`. The model used is specified by environment variables `NOTIFICATIONS_CLIENT` and `NOTIFICATIONS_MODEL`. This variable is required. The `govuk-notify` client and `govuk-notify-model` model use the [notifications-node-client](https://docs.notifications.service.gov.uk/node.html) module.
+
+If adding a new notifications client or model use the [existing methods and implementation](/notifications/) as a guide.
 
 ## Build and run
 
@@ -110,9 +124,11 @@ KEYCLOAK_USERNAME
 KEYCLOAK_PASSWORD
 KEYCLOAK_TOKEN_URL
 CASEWORKER_EMAIL # Email address to send pass/fail notifications to
+NOTIFICATIONS_CLIENT # e.g. govuk-notify. No default is given
+NOTIFICATIONS_MODEL # e.g. govuk-notify-model. No default is given
 NOTIFY_KEY # API key for a GovUK Notify service
-NOTIFY_TEMPLATE_PASS # Template reference ID for GovUK Notify template for success case
-NOTIFY_TEMPLATE_FAIL # Template reference ID for GovUK Notify template for failure case
+DB_REPLACER_SUCCESS_TEMPLATE # Template reference ID for GovUK Notify template for success case
+DB_REPLACER_FAILURE_TEMPLATE # Template reference ID for GovUK Notify template for failure case
 DB_INSERT_BATCH_SIZE # Defaults to 2000. OPTIONAL: tweak for the max size of a single DB insert batch
 DB_CLIENT # Choose a DB client to use to interact with the database e.g. 'pgp' or 'knex'. Options are in the /db folder
 DB_MODEL # Choose a DB model appropriate to the client you selected. Options are in the /db/models folder

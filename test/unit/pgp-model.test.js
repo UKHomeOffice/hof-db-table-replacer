@@ -34,11 +34,11 @@ describe('The database model method getLatestUrl()', () => {
 
   test('returns an error if failing', async () => {
     client = {
-      one: jest.fn().mockRejectedValue(new Error('Url retrieval failed'))
+      one: jest.fn().mockRejectedValue(new Error('Error retrieving data URL'))
     };
 
     return db.getLatestUrl(client).catch(error => {
-      expect(error.message).toEqual('Url retrieval failed');
+      expect(error.message).toEqual('Error retrieving data URL');
     });
   });
 });

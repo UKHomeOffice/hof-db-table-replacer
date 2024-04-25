@@ -26,8 +26,8 @@ module.exports = class KnexPostgresModel {
         .timeout(this.requestTimeout);
       return result[0];
     } catch (error) {
-      logger.log('error', 'Error retrieving CSV URL');
-      throw error;
+      logger.log('error', 'Error retrieving data URL');
+      throw new Error('Error retrieving data URL', { cause: error });
     }
   }
 
@@ -36,7 +36,7 @@ module.exports = class KnexPostgresModel {
       await knex.schema.dropTableIfExists(`${this.targetTable}_tmp`);
     } catch (error) {
       logger.log('error', 'Error dropping temporary lookup table');
-      throw error;
+      throw new Error('Error dropping temporary lookup table', { cause: error });
     }
   }
 
@@ -45,7 +45,7 @@ module.exports = class KnexPostgresModel {
       await knex.schema.createTableLike(`${this.targetTable}_tmp`, this.targetTable);
     } catch (error) {
       logger.log('error', 'Error setting up temporary lookup table');
-      throw error;
+      throw new Error('Error setting up temporary lookup table', { cause: error });
     }
   }
 
@@ -58,7 +58,7 @@ module.exports = class KnexPostgresModel {
       logger.log('info', `Total batches: ${Math.ceil(records.length / insertBatchSize)}, Duration: ${timeDiff}`);
     } catch (error) {
       logger.log('error', 'Error during records insert');
-      throw error;
+      throw new Error('Error during records insert', { cause: error });
     }
   }
 
@@ -70,7 +70,7 @@ module.exports = class KnexPostgresModel {
       });
     } catch (error) {
       logger.log('error', 'Error during table replacement');
-      throw error;
+      throw new Error('Error during table replacement', { cause: error });
     }
   }
 };

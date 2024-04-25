@@ -46,7 +46,7 @@ module.exports = class NotifyModel {
         personalisation: emailProps
       });
     } catch (error) {
-      logger.log('error', 'Error sending notifications:', error);
+      logger.log('error', 'Error sending notifications email:', error);
     }
   }
 

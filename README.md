@@ -40,7 +40,7 @@ Some [documentation of the high level design process for the lookup replacer](ht
 
 ## Configuration
 
-The root level `config.js` file transforms environment variables into an exported object that can be referred to throughout the app.
+The root level `config.js` file transforms environment variables into an exported object that can be referred to throughout the app. Each service the script runs for also has its own `config.js` file (see [Service](#service)).
 
 ### Database
 
@@ -79,7 +79,7 @@ module.exports = {
 
 If there are columns in the CSV that do not need to be inserted to the database, include the column in `parseHeadings` (if used), this will ensure that CSV data is parsed into the correct object properties. Whether using `parseHeadings` or not you can remove additional properties from parsed records before insertion in a `validateRecord` function. Ensure that `targetColumns` only includes database columns you want to insert, and that record objects have a key/value for each of those columns.
 
-If the `validateRecord` property is defined as a function with one `record` argument the script will use that function to validate records row by row. The function must return at least an object with at least the `valid` property. Records returning `{ valid: true }` from this function are added to the `records` array, those that return `{ valid: false }` are added to the `invalidRecords` array. Check existing implementation for examples.
+If the `validateRecord` property is defined as a function with one `record` argument the script will use that function to validate records row by row. The function must return at least an object with at least the `valid` property. Records returning `{ valid: true }` from this function are added to the `records` array, those that return `{ valid: false }` are added to the `invalidRecords` array. Check [existing implementation](/services/ima/config.js) for examples.
 
 The other properties returned by the `validateRecord` function can be used by your notifications model to tailor emails. Check your chosen notifications model for required data.
 
@@ -93,11 +93,11 @@ It is possible to use a data source that is not protected by Keycloak as long as
 
 ### Notifications
 
-Similar to the Database selection, The Notifications service used can be configured to client and model.
+Similar to the database selection, the notifications service used can be configured to client and model.
 
 A notifications client and model is imported in `run.js`. The model used is specified by environment variables `NOTIFICATIONS_CLIENT` and `NOTIFICATIONS_MODEL`. This variable is required. The `govuk-notify` client and `govuk-notify-model` model use the [notifications-node-client](https://docs.notifications.service.gov.uk/node.html) module.
 
-If adding a new notifications client or model use the existing methods and implementation as a guide.
+If adding a new notifications client or model use the [existing methods and implementation](/notifications/) as a guide.
 
 ## Build and run
 
